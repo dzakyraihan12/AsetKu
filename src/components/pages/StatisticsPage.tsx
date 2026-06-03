@@ -55,7 +55,7 @@ export function StatisticsPage() {
       variants={{ show: { transition: { staggerChildren: 0.03 } } }}
     >
       {/* Header with gradient */}
-      <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card">
+      <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card safe-top">
         <div className="relative z-10">
           <div className="flex items-center gap-2">
             <span className="text-[18px]">📊</span>

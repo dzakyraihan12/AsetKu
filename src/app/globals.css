@@ -221,7 +221,7 @@ html {
 
 @media all and (display-mode: standalone) {
   body {
-    padding-top: env(safe-area-inset-top);
+    /* Status bar blends with hero-gradient via theme_color meta */
   }
 }
 
