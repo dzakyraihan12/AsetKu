@@ -219,8 +219,11 @@ html {
   overflow: hidden;
 }
 
+html, body {
+  height: -webkit-fill-available;
+}
+
 @media all and (display-mode: standalone) {
-  /* Hero gradient extends behind the status bar */
   .hero-gradient {
     margin-top: calc(-1 * env(safe-area-inset-top, 0px));
     padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
