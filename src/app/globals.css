@@ -217,11 +217,11 @@
 html {
   scroll-behavior: smooth;
   overflow: hidden;
-  height: 100%;
 }
 
-body {
-  height: 100%;
+html, body {
+  position: fixed;
+  inset: 0;
   overflow: hidden;
 }
 

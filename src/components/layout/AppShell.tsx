@@ -120,10 +120,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Bottom Navigation — Elevated Floating Bar */}
       <nav
-        className="fixed left-0 right-0 z-50"
-        style={{ bottom: 'env(safe-area-inset-bottom, 8px)', transform: 'translate3d(0,0,0)' }}
+        className="fixed left-0 right-0 bottom-0 z-50"
+        style={{ transform: 'translate3d(0,0,0)' }}
       >
-        <div className="mx-auto max-w-lg px-4">
+        <div className="mx-auto max-w-lg px-4 pb-2">
           <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;
