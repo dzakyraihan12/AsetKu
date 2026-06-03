@@ -217,14 +217,15 @@
 html {
   scroll-behavior: smooth;
   overflow: hidden;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
 }
 
 @media all and (display-mode: standalone) {
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-
   /* Hero gradient extends behind the status bar */
   .hero-gradient {
     margin-top: calc(-1 * env(safe-area-inset-top, 0px));
