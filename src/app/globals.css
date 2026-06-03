@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 20% 96%;
+    --foreground: 216 30% 12%;
+    --surface: 0 0% 100%;
+    --surface-secondary: 216 16% 94%;
+    --surface-tertiary: 216 12% 91%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 30% 12%;
+    --primary: 201 75% 33%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 197 78% 51%;
+    --secondary: 216 14% 94%;
+    --secondary-foreground: 216 10% 42%;
+    --muted: 216 14% 94%;
+    --muted-foreground: 216 10% 44%;
+    --accent: 197 78% 51%;
+    --accent-foreground: 0 0% 100%;
+    --accent-soft: 197 55% 95%;
+    --gold: 42 95% 52%;
+    --gold-soft: 42 50% 94%;
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 40% 96%;
+    --success: 155 65% 38%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 155 45% 94%;
+    --warning: 38 92% 50%;
+    --warning-soft: 38 55% 95%;
+    --border: 216 14% 89%;
+    --input: 216 12% 91%;
+    --ring: 201 75% 33%;
+    --radius: 16px;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 210 15% 95%;
+    --surface: 220 22% 12%;
+    --surface-secondary: 220 20% 15%;
+    --surface-tertiary: 220 18% 18%;
+    --card: 220 22% 12%;
+    --card-foreground: 210 15% 95%;
+    --primary: 197 82% 54%;
+    --primary-foreground: 220 30% 8%;
+    --primary-light: 197 88% 62%;
+    --secondary: 220 18% 15%;
+    --secondary-foreground: 210 10% 55%;
+    --muted: 220 18% 15%;
+    --muted-foreground: 210 8% 50%;
+    --accent: 197 82% 54%;
+    --accent-foreground: 220 30% 8%;
+    --accent-soft: 197 30% 16%;
+    --gold: 42 88% 56%;
+    --gold-soft: 42 30% 14%;
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 220 30% 8%;
+    --destructive-soft: 0 25% 14%;
+    --success: 155 60% 48%;
+    --success-foreground: 220 30% 8%;
+    --success-soft: 155 25% 14%;
+    --warning: 38 75% 56%;
+    --warning-soft: 38 25% 14%;
+    --border: 220 18% 17%;
+    --input: 220 18% 17%;
+    --ring: 197 82% 54%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-jakarta), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+  }
+
+  input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px hsl(var(--surface)) inset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  }
+}
+
+@layer components {
+  /* Blue gradient button — from Figma DS */
+  .btn-gradient {
+    background: linear-gradient(98deg, #135581 2%, #24AAE1 100%) !important;
+  }
+
+  /* Gold/Yellow gradient button — from Figma DS */
+  .btn-gold {
+    background: linear-gradient(135deg, #FDCC09 0%, #D4A406 100%) !important;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .glass {
+    @apply backdrop-blur-2xl;
+    background: hsl(var(--surface) / 0.88);
+  }
+
+  .press-scale {
+    @apply transition-transform duration-75 ease-out active:scale-[0.96];
+  }
+
+  .number-display {
+    @apply font-tabular tracking-tight;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #135581, #24AAE1);
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #135581, #24AAE1);
+  }
+
+  /* Hero section gradient */
+  .hero-gradient {
+    background: linear-gradient(145deg,
+      #0d3553 0%,
+      #135581 35%,
+      #1a7bb5 70%,
+      #24AAE1 100%);
+  }
+
+  :is(.dark .hero-gradient) {
+    background: linear-gradient(145deg,
+      #071d2e 0%,
+      #0e3a58 35%,
+      #125a82 70%,
+      #1882b5 100%);
+  }
+
+  .wealth-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .wealth-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -25%;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .wealth-card::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    left: -15%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(36,170,225,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .card-elevated {
+    @apply bg-surface rounded-2xl border border-border/40 shadow-card;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold;
+  }
+
+  .chip-success {
+    @apply chip bg-emerald-500/10 text-emerald-600 dark:text-emerald-400;
+  }
+
+  .chip-danger {
+    @apply chip bg-red-500/10 text-red-600 dark:text-red-400;
+  }
+
+  .chip-accent {
+    @apply chip bg-sky-500/10 text-sky-600 dark:text-sky-400;
+  }
+
+  .chip-gold {
+    @apply chip bg-amber-500/10 text-amber-600 dark:text-amber-400;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow: hidden;
+}
+
+@media all and (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
