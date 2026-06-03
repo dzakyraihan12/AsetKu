@@ -24,11 +24,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           'disabled:opacity-30 disabled:pointer-events-none',
           'active:scale-[0.96]',
           {
-            'btn-gradient text-white rounded-full shadow-md shadow-sky-900/20 hover:brightness-110 font-bold': variant === 'primary',
+            'btn-gradient text-white rounded-full shadow-md shadow-sky-900/20 hover:brightness-110 font-bold': variant === 'primary' || variant === 'accent',
             'bg-surface-secondary text-foreground rounded-full border border-border/40 hover:bg-surface-tertiary': variant === 'secondary',
             'text-muted-foreground hover:text-foreground hover:bg-surface-secondary rounded-full': variant === 'ghost',
             'bg-destructive text-destructive-foreground rounded-full': variant === 'destructive',
-            'btn-gradient text-white rounded-full shadow-md shadow-sky-900/20 hover:brightness-110 font-bold': variant === 'accent',
             'btn-gold text-[#3d2e00] rounded-full shadow-md shadow-amber-500/25 hover:brightness-105 font-bold': variant === 'gold',
           },
           {
