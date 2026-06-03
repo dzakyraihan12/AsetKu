@@ -217,6 +217,12 @@
 html {
   scroll-behavior: smooth;
   overflow: hidden;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
 }
 
 @media all and (display-mode: standalone) {

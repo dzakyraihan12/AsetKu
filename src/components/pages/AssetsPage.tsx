@@ -148,12 +148,12 @@ export function AssetsPage() {
                 <p className="text-micro text-muted-foreground/35 mt-0.5">{catName}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-caption font-bold number-display">{formatCompact(value)}</p>
+                <p className="text-caption font-bold number-display">{formatCurrency(value)}</p>
                 {monthChange !== 0 && (
                   <div className={`flex items-center gap-0.5 justify-end mt-0.5 ${monthChange > 0 ? 'text-success' : 'text-destructive'}`}>
                     {monthChange > 0 ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
                     <span className="text-micro font-semibold number-display">
-                      {monthChange > 0 ? '+' : ''}{formatCompact(monthChange)}
+                      {monthChange > 0 ? '+' : ''}{formatCurrency(monthChange)}
                     </span>
                   </div>
                 )}

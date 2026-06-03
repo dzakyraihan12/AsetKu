@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact, calculateProgress } from '@/lib/utils';
@@ -22,9 +22,21 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
-export function DashboardPage() {
+export function DashboardPage({ userName }: { userName: string | null }) {
   const { assets, transactions, customGroups, goals, categories, getAssetValue, getTotalValue, getGroupTotal, getCategoryTotal } = useStore();
   const navigate = useNavigate();
+  const [hideBalance, setHideBalance] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('asetku_hide_balance') === 'true';
+    }
+    return false;
+  });
+
+  const toggleHideBalance = () => {
+    const next = !hideBalance;
+    setHideBalance(next);
+    localStorage.setItem('asetku_hide_balance', String(next));
+  };
 
   const totalValue = useMemo(() => getTotalValue(), [assets, transactions]);
   const animatedTotal = useCountUp(totalValue, 900);
@@ -79,11 +91,11 @@ export function DashboardPage() {
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-md shadow-lg shadow-black/10">
-                <span className="text-[12px] font-bold text-white">DZ</span>
+                <span className="text-[12px] font-bold text-white">{userName ? userName.slice(0, 2).toUpperCase() : 'U'}</span>
               </div>
               <div>
                 <p className="text-[11px] text-white/50 font-medium">{greeting.emoji} Selamat {greeting.text}</p>
-                <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">Dzaky</p>
+                <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
               </div>
             </div>
             <motion.div
@@ -103,18 +115,26 @@ export function DashboardPage() {
 
           {/* Wealth Display */}
           <div className="mt-5 relative z-10">
-            <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Kekayaan</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Kekayaan</p>
+              <button onClick={toggleHideBalance} className="p-1 rounded-full hover:bg-white/10 transition-colors">
+                {hideBalance
+                  ? <EyeOff className="h-3.5 w-3.5 text-white/40" />
+                  : <Eye className="h-3.5 w-3.5 text-white/40" />
+                }
+              </button>
+            </div>
             <motion.p
               className="text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
-              {formatCurrency(animatedTotal)}
+              {hideBalance ? '••••••••' : formatCurrency(animatedTotal)}
             </motion.p>
             <div className="flex items-center gap-2 mt-1.5">
               <span className={`text-[11px] font-semibold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-                {monthChange >= 0 ? '↑' : '↓'} {formatCompact(Math.abs(monthChange))}
+                {hideBalance ? '•••' : `${monthChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(monthChange))}`}
               </span>
               <span className="text-[10px] text-white/25">bulan ini</span>
             </div>
