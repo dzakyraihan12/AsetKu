@@ -220,8 +220,10 @@ html {
 }
 
 @media all and (display-mode: standalone) {
-  body {
-    /* Status bar blends with hero-gradient via theme_color meta */
+  /* Hero gradient extends behind the status bar */
+  .hero-gradient {
+    margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+    padding-top: calc(env(safe-area-inset-top, 0px) + 1.25rem);
   }
 }
 
