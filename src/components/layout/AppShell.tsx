@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Bottom Navigation — Elevated Floating Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50">
         <div className="mx-auto max-w-lg px-4 pb-1">
           <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
