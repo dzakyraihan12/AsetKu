@@ -217,16 +217,19 @@
 html {
   scroll-behavior: smooth;
   overflow: hidden;
+  height: 100%;
 }
 
-html, body {
-  height: -webkit-fill-available;
+body {
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
 }
 
 @media all and (display-mode: standalone) {
   .hero-gradient {
-    margin-top: calc(-1 * env(safe-area-inset-top, 0px));
-    padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
+    padding-top: 3.5rem;
   }
 }
 
