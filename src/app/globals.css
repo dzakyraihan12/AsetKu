@@ -219,12 +219,6 @@ html {
   overflow: hidden;
 }
 
-html, body {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-}
-
 @media all and (display-mode: standalone) {
   /* Hero gradient extends behind the status bar */
   .hero-gradient {
