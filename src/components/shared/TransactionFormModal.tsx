@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Loader2 } from 'lucide-react';
 import { useStore } from '@/store';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/FormElements';
@@ -27,16 +29,23 @@ interface Props {
 export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
   const { addTransaction } = useStore();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { date: new Date().toISOString().split('T')[0] },
   });
 
   const onSubmit = async (data: FormData) => {
-    await addTransaction({ assetId, type, amount: data.amount, notes: data.notes, date: data.date });
-    toast(type === 'add' ? 'Nilai berhasil ditambahkan' : 'Nilai berhasil dikurangi', type === 'add' ? 'success' : 'info');
-    reset();
-    onClose();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await addTransaction({ assetId, type, amount: data.amount, notes: data.notes, date: data.date });
+      toast(type === 'add' ? 'Nilai berhasil ditambahkan' : 'Nilai berhasil dikurangi', type === 'add' ? 'success' : 'info');
+      reset();
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -50,8 +59,9 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
           className="w-full"
           size="lg"
           variant={type === 'add' ? 'gold' : 'destructive'}
+          disabled={isSubmitting}
         >
-          {type === 'add' ? '+ Tambah Nilai' : '- Kurangi Nilai'}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (type === 'add' ? '+ Tambah Nilai' : '- Kurangi Nilai')}
         </Button>
       </form>
     </Modal>

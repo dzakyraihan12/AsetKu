@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Loader2 } from 'lucide-react';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
@@ -30,6 +31,7 @@ interface Props {
 export function AssetFormModal({ open, onClose, editId }: Props) {
   const { assets, categories, addAsset, updateAsset } = useStore();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const editing = editId ? assets.find((a) => a.id === editId) : null;
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormData>({
@@ -47,14 +49,20 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
   }, [editing, open, reset]);
 
   const onSubmit = async (data: FormData) => {
-    if (editing) {
-      await updateAsset(editing.id, data);
-      toast('Aset berhasil diperbarui');
-    } else {
-      await addAsset(data);
-      toast('Aset berhasil ditambahkan');
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      if (editing) {
+        await updateAsset(editing.id, data);
+        toast('Aset berhasil diperbarui');
+      } else {
+        await addAsset(data);
+        toast('Aset berhasil ditambahkan');
+      }
+      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   return (
@@ -91,8 +99,8 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
 
         <Textarea label="Catatan (opsional)" placeholder="Deskripsi singkat..." {...register('notes')} />
 
-        <Button type="submit" variant="gold" className="w-full" size="lg">
-          {editing ? 'Simpan' : 'Tambah Aset'}
+        <Button type="submit" variant="gold" className="w-full" size="lg" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (editing ? 'Simpan' : 'Tambah Aset')}
         </Button>
       </form>
     </Modal>

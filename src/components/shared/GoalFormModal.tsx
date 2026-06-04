@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Loader2 } from 'lucide-react';
 import { useStore } from '@/store';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/FormElements';
@@ -28,6 +29,7 @@ interface Props {
 export function GoalFormModal({ open, onClose, editId }: Props) {
   const { goals, customGroups, addGoal, updateGoal } = useStore();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const editing = editId ? goals.find((g) => g.id === editId) : null;
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
@@ -43,15 +45,21 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
   }, [editing, open, reset]);
 
   const onSubmit = async (data: FormData) => {
-    const payload = { ...data, customGroupId: data.customGroupId || undefined };
-    if (editing) {
-      await updateGoal(editing.id, payload);
-      toast('Target berhasil diperbarui');
-    } else {
-      await addGoal(payload);
-      toast('Target berhasil dibuat');
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const payload = { ...data, customGroupId: data.customGroupId || undefined };
+      if (editing) {
+        await updateGoal(editing.id, payload);
+        toast('Target berhasil diperbarui');
+      } else {
+        await addGoal(payload);
+        toast('Target berhasil dibuat');
+      }
+      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   return (
@@ -65,8 +73,8 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
           options={[{ value: '', label: 'Total Semua Aset' }, ...customGroups.map((g) => ({ value: g.id, label: g.name }))]}
           {...register('customGroupId')}
         />
-        <Button type="submit" variant="gold" className="w-full" size="lg">
-          {editing ? 'Simpan' : 'Buat Target'}
+        <Button type="submit" variant="gold" className="w-full" size="lg" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (editing ? 'Simpan' : 'Buat Target')}
         </Button>
       </form>
     </Modal>

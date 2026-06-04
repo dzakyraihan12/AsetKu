@@ -8,8 +8,10 @@ import { formatCompact, calculateProgress, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { CircularProgress } from '@/components/ui/Progress';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Confetti } from '@/components/shared/Confetti';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { useToast } from '@/components/ui/Toast';
 import { differenceInMonths, addMonths, format, differenceInDays } from 'date-fns';
 
 const fadeUp = {
@@ -19,9 +21,11 @@ const fadeUp = {
 
 export function GoalsPage() {
   const { goals, transactions, getTotalValue, getGroupTotal, deleteGoal } = useStore();
+  const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const totalValue = getTotalValue();
 
@@ -187,7 +191,7 @@ export function GoalsPage() {
                               <Edit2 className="h-3 w-3" /> Edit
                             </button>
                             <button
-                              onClick={() => { setMenuOpen(null); deleteGoal(goal.id); }}
+                              onClick={() => { setMenuOpen(null); setConfirmDeleteId(goal.id); }}
                               className="flex items-center gap-2 w-full px-3.5 py-2 text-[11px] text-destructive hover:bg-destructive-soft"
                             >
                               <Trash2 className="h-3 w-3" /> Hapus
@@ -289,6 +293,19 @@ export function GoalsPage() {
       )}
 
       <GoalFormModal open={showForm} onClose={() => setShowForm(false)} editId={editId} />
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Hapus Target?"
+        message="Target ini akan dihapus permanen dan tidak bisa dikembalikan."
+        onConfirm={async () => {
+          if (confirmDeleteId) {
+            await deleteGoal(confirmDeleteId);
+            setConfirmDeleteId(null);
+            toast('Target berhasil dihapus', 'info');
+          }
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </PageLayout>
   );
 }
