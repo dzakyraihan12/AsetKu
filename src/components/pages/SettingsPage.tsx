@@ -143,7 +143,7 @@ export function SettingsPage() {
           </div>
           <div className="space-y-0 max-h-36 overflow-y-auto">
             {categories.map((cat) => (
-              <div key={cat.id} className="flex items-center justify-between py-1.5 px-1 rounded-lg hover:bg-surface-secondary/50 transition-colors group">
+              <div key={cat.id} className="flex items-center justify-between py-2 px-1.5 rounded-lg hover:bg-surface-secondary/50 transition-colors">
                 {editCatId === cat.id ? (
                   <input
                     autoFocus
@@ -151,17 +151,17 @@ export function SettingsPage() {
                     onChange={(e) => setEditCatName(e.target.value)}
                     onBlur={handleUpdateCategory}
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdateCategory()}
-                    className="h-5 rounded bg-surface-secondary px-2 text-caption focus:outline-none flex-1 mr-2"
+                    className="h-6 rounded-md bg-surface-secondary px-2.5 text-caption focus:outline-none focus:ring-1 focus:ring-primary/30 flex-1 mr-2 border border-border/20"
                   />
                 ) : (
                   <span className="text-caption">{cat.name}</span>
                 )}
-                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => { setEditCatId(cat.id); setEditCatName(cat.name); }} className="p-1 rounded hover:bg-surface-secondary">
-                    <Edit2 className="h-2.5 w-2.5 text-muted-foreground/50" />
+                <div className="flex gap-1 opacity-60">
+                  <button onClick={() => { setEditCatId(cat.id); setEditCatName(cat.name); }} className="p-1.5 rounded-md hover:bg-surface-secondary active:scale-95 transition-all">
+                    <Edit2 className="h-3 w-3 text-muted-foreground/50" />
                   </button>
-                  <button onClick={() => deleteCategory(cat.id)} className="p-1 rounded hover:bg-destructive-soft">
-                    <Trash2 className="h-2.5 w-2.5 text-destructive/60" />
+                  <button onClick={() => deleteCategory(cat.id)} className="p-1.5 rounded-md hover:bg-destructive-soft active:scale-95 transition-all">
+                    <Trash2 className="h-3 w-3 text-destructive/50" />
                   </button>
                 </div>
               </div>
@@ -184,17 +184,17 @@ export function SettingsPage() {
           ) : (
             <div className="space-y-0">
               {customGroups.map((group) => (
-                <div key={group.id} className="flex items-center justify-between py-1.5 px-1 rounded-lg hover:bg-surface-secondary/50 transition-colors group">
+                <div key={group.id} className="flex items-center justify-between py-2 px-1.5 rounded-lg hover:bg-surface-secondary/50 transition-colors">
                   <div>
                     <p className="text-caption font-medium">{group.name}</p>
                     <p className="text-micro text-muted-foreground/30">{group.assetIds.length} aset</p>
                   </div>
-                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => { setEditGroupId(group.id); setShowGroupForm(true); }} className="p-1 rounded hover:bg-surface-secondary">
-                      <Edit2 className="h-2.5 w-2.5 text-muted-foreground/50" />
+                  <div className="flex gap-1 opacity-60">
+                    <button onClick={() => { setEditGroupId(group.id); setShowGroupForm(true); }} className="p-1.5 rounded-md hover:bg-surface-secondary active:scale-95 transition-all">
+                      <Edit2 className="h-3 w-3 text-muted-foreground/50" />
                     </button>
-                    <button onClick={() => deleteGroup(group.id)} className="p-1 rounded hover:bg-destructive-soft">
-                      <Trash2 className="h-2.5 w-2.5 text-destructive/60" />
+                    <button onClick={() => deleteGroup(group.id)} className="p-1.5 rounded-md hover:bg-destructive-soft active:scale-95 transition-all">
+                      <Trash2 className="h-3 w-3 text-destructive/50" />
                     </button>
                   </div>
                 </div>

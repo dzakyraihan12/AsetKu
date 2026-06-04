@@ -78,18 +78,40 @@ export function GoalsPage() {
       </div>
 
       {goals.length === 0 ? (
-        <div className="text-center py-20 space-y-4 px-6">
+        <div className="text-center py-16 space-y-4 px-6">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 300 }}
-            className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-500/10 to-violet-500/10 flex items-center justify-center mx-auto border border-border/20"
+            className="w-14 h-14 rounded-3xl bg-gradient-to-br from-blue-500/10 to-violet-500/10 flex items-center justify-center mx-auto border border-border/20"
           >
-            <span className="text-[28px]">🚀</span>
+            <span className="text-[26px]">🚀</span>
           </motion.div>
           <div>
-            <p className="text-[14px] font-bold">Belum ada target</p>
-            <p className="text-[11px] text-muted-foreground/40 mt-1">Set financial goals kamu dan pantau progressnya!</p>
+            <p className="text-[13px] font-bold">Belum ada target</p>
+            <p className="text-[11px] text-muted-foreground/50 mt-1.5 leading-relaxed">
+              Set financial goals dan pantau progress kamu secara real-time.
+            </p>
+          </div>
+          <div className="text-left max-w-[260px] mx-auto space-y-2 py-2">
+            <div className="flex items-center gap-2.5">
+              <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                <Target className="h-3 w-3 text-primary" />
+              </div>
+              <span className="text-[11px] text-muted-foreground/60">Tentukan nominal target kekayaan</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                <Calendar className="h-3 w-3 text-primary" />
+              </div>
+              <span className="text-[11px] text-muted-foreground/60">Set deadline kapan harus tercapai</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                <Zap className="h-3 w-3 text-primary" />
+              </div>
+              <span className="text-[11px] text-muted-foreground/60">Dapatkan estimasi otomatis pencapaian</span>
+            </div>
           </div>
           <Button variant="gold" size="sm" onClick={() => setShowForm(true)}>
             <Plus className="h-3.5 w-3.5" /> Buat target pertama

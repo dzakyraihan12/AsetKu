@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Search, ChevronRight, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -164,14 +164,38 @@ export function AssetsPage() {
         })}
 
         {filteredAssets.length === 0 && (
-          <div className="text-center py-16 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-surface-secondary flex items-center justify-center mx-auto">
-              <span className="text-xl">💰</span>
+          <div className="text-center py-16 space-y-4 px-4">
+            <div className="w-14 h-14 rounded-2xl bg-surface-secondary flex items-center justify-center mx-auto">
+              <span className="text-2xl">💰</span>
             </div>
-            <p className="text-caption font-semibold">Belum ada aset</p>
-            <p className="text-micro text-muted-foreground/40">Mulai lacak kekayaan kamu</p>
+            <div>
+              <p className="text-[13px] font-bold">Belum ada aset</p>
+              <p className="text-[11px] text-muted-foreground/50 mt-1.5 leading-relaxed">
+                Mulai lacak seluruh kekayaan kamu dalam satu tempat.
+              </p>
+            </div>
+            <div className="text-left max-w-[240px] mx-auto space-y-2 py-2">
+              <div className="flex items-center gap-2.5">
+                <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                  <Wallet className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-[11px] text-muted-foreground/60">Rekening bank, deposito, cash</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                  <TrendingUp className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-[11px] text-muted-foreground/60">Saham, crypto, reksadana</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                  <ChevronRight className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-[11px] text-muted-foreground/60">Properti, kendaraan, emas & lainnya</span>
+              </div>
+            </div>
             <Button variant="gold" size="sm" onClick={() => setShowForm(true)}>
-              <Plus className="h-3.5 w-3.5" /> Tambah aset
+              <Plus className="h-3.5 w-3.5" /> Tambah aset pertama
             </Button>
           </div>
         )}

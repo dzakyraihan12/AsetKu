@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target, Eye, EyeOff } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact, calculateProgress } from '@/lib/utils';
