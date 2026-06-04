@@ -224,6 +224,11 @@ html {
     margin-top: calc(-1 * env(safe-area-inset-top, 0px));
     padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
   }
+
+  /* Ensure bottom nav sits above home indicator */
+  .nav-bottom-offset {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
