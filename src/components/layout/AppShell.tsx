@@ -68,20 +68,60 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Blur when app goes to background (app switcher) & show splash on return
+  // iOS captures screenshot before React re-renders, so we manipulate DOM directly
   useEffect(() => {
+    const blurOverlay = document.getElementById('privacy-blur-overlay');
+
+    const handleBlur = () => {
+      // Synchronously show blur before iOS captures screenshot
+      if (blurOverlay) {
+        blurOverlay.style.display = 'block';
+      }
+      // Also update React state for splash on return
+      setIsBlurred(true);
+    };
+
+    const handleFocus = () => {
+      // Show splash on return
+      setShowSplash(true);
+      setIsBlurred(false);
+      if (blurOverlay) {
+        blurOverlay.style.display = 'none';
+      }
+      const timer = setTimeout(() => setShowSplash(false), 1400);
+      return () => clearTimeout(timer);
+    };
+
+    // visibilitychange for general case
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        setIsBlurred(true);
+        handleBlur();
       } else if (document.visibilityState === 'visible') {
-        // Show splash on return
-        setShowSplash(true);
-        setIsBlurred(false);
-        const timer = setTimeout(() => setShowSplash(false), 1400);
-        return () => clearTimeout(timer);
+        handleFocus();
       }
     };
+
+    // pagehide/pageshow are more reliable on iOS Safari/PWA
+    const handlePageHide = () => handleBlur();
+    const handlePageShow = () => handleFocus();
+
+    // blur/focus on window — fires when entering app switcher on iOS
+    const handleWindowBlur = () => handleBlur();
+    const handleWindowFocus = () => handleFocus();
+
     document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
   }, []);
 
   const handleTabChange = useCallback((id: TabId) => {
@@ -162,10 +202,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
 
-      {/* Privacy blur overlay when app is in background/app switcher */}
-      {isBlurred && (
-        <div className="fixed inset-0 z-[9998] backdrop-blur-xl bg-background/60" />
-      )}
+      {/* Privacy blur overlay — always in DOM, toggled via display for instant iOS response */}
+      <div
+        id="privacy-blur-overlay"
+        className="fixed inset-0 z-[9998] backdrop-blur-xl bg-background/80"
+        style={{ display: isBlurred ? 'block' : 'none' }}
+      />
     </div>
   );
 }
