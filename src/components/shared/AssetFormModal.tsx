@@ -49,10 +49,10 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
   const onSubmit = async (data: FormData) => {
     if (editing) {
       await updateAsset(editing.id, data);
-      toast('Aset berhasil diperbarui ✅');
+      toast('Aset berhasil diperbarui');
     } else {
       await addAsset(data);
-      toast('Aset berhasil ditambahkan 🎉');
+      toast('Aset berhasil ditambahkan');
     }
     onClose();
   };

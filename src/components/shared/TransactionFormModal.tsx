@@ -34,7 +34,7 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
 
   const onSubmit = async (data: FormData) => {
     await addTransaction({ assetId, type, amount: data.amount, notes: data.notes, date: data.date });
-    toast(type === 'add' ? 'Nilai berhasil ditambahkan 💰' : 'Nilai berhasil dikurangi', type === 'add' ? 'success' : 'info');
+    toast(type === 'add' ? 'Nilai berhasil ditambahkan' : 'Nilai berhasil dikurangi', type === 'add' ? 'success' : 'info');
     reset();
     onClose();
   };

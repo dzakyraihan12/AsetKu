@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Moon, Sun, Monitor, Download, Upload, Plus, Edit2, Trash2, Shield } from 'lucide-react';
+import { Moon, Sun, Monitor, Download, Upload, Plus, Edit2, Trash2, Shield, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { useStore } from '@/store';
@@ -52,7 +52,7 @@ export function SettingsPage() {
     a.download = `asetku-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast('Data berhasil di-export 📦');
+    toast('Data berhasil di-export');
   };
 
   const handleImport = () => {
@@ -76,7 +76,7 @@ export function SettingsPage() {
         if (data.customGroups) await db.customGroups.bulkAdd(data.customGroups);
         if (data.goals) await db.goals.bulkAdd(data.goals);
         await loadAll();
-        toast('Data berhasil dipulihkan ✅');
+        toast('Data berhasil dipulihkan');
       } catch {
         toast('Gagal mengimpor data', 'error');
       }
@@ -95,7 +95,7 @@ export function SettingsPage() {
       <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card">
         <div className="relative z-10">
           <div className="flex items-center gap-2">
-            <span className="text-[18px]">⚙️</span>
+            <Settings className="h-4 w-4 text-white/80" />
             <h1 className="text-[16px] font-extrabold text-white tracking-tight">Pengaturan</h1>
           </div>
           <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Personalisasi pengalaman kamu</p>

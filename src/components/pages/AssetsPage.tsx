@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, ChevronRight, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Plus, Search, ChevronRight, TrendingUp, TrendingDown, Wallet, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact } from '@/lib/utils';
@@ -9,10 +10,10 @@ import { Button } from '@/components/ui/Button';
 import { AssetFormModal } from '@/components/shared/AssetFormModal';
 import { AssetDetailModal } from '@/components/shared/AssetDetailModal';
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'Cash': '💵', 'Rekening Bank': '🏦', 'Deposito': '🔒', 'Saham': '📈',
-  'Crypto': '₿', 'Properti': '🏠', 'Kendaraan': '🚗', 'Emas': '✨',
-  'Piutang': '📋', 'Lainnya': '📦',
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  'Cash': Banknote, 'Rekening Bank': Landmark, 'Deposito': Lock, 'Saham': TrendingUp,
+  'Crypto': Bitcoin, 'Properti': Home, 'Kendaraan': Car, 'Emas': Sparkles,
+  'Piutang': ClipboardList, 'Lainnya': Package,
 };
 
 const fadeUp = {
@@ -60,7 +61,7 @@ export function AssetsPage() {
         <div className="flex items-center justify-between relative z-10">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[18px]">💰</span>
+              <Wallet className="h-4 w-4 text-white/80" />
               <h1 className="text-[16px] font-extrabold text-white tracking-tight">Aset Saya</h1>
             </div>
             <p className="text-[11px] text-white/45 number-display mt-1 ml-[34px]">
@@ -104,7 +105,7 @@ export function AssetsPage() {
                 filterCat === cat.id ? 'btn-gradient text-white shadow-sm shadow-sky-900/15' : 'bg-surface border border-border/40 text-muted-foreground/60'
               }`}
             >
-              <span className="text-[10px]">{CATEGORY_ICONS[cat.name] || '📦'}</span>
+              {(() => { const Icon = CATEGORY_ICONS[cat.name] || Package; return <Icon className="h-3 w-3" />; })()}
               {cat.name}
             </button>
           ))}
@@ -122,7 +123,7 @@ export function AssetsPage() {
           const value = getAssetValue(asset.id);
           const monthChange = getAssetMonthChange(asset.id);
           const catName = categories.find(c => c.id === asset.categoryId)?.name ?? '';
-          const icon = CATEGORY_ICONS[catName] || '📦';
+          const IconComp = CATEGORY_ICONS[catName] || Package;
           const pct = totalValue > 0 ? Math.round((value / totalValue) * 100) : 0;
 
           return (
@@ -138,7 +139,7 @@ export function AssetsPage() {
                 style={{ backgroundColor: ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'][categories.findIndex(c => c.id === asset.categoryId) % 7] }}
               />
               <div className="h-9 w-9 rounded-xl bg-surface-secondary flex items-center justify-center shrink-0 ml-1">
-                <span className="text-sm">{icon}</span>
+                <IconComp className="h-4 w-4 text-muted-foreground/60" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -166,7 +167,7 @@ export function AssetsPage() {
         {filteredAssets.length === 0 && (
           <div className="text-center py-16 space-y-4 px-4">
             <div className="w-14 h-14 rounded-2xl bg-surface-secondary flex items-center justify-center mx-auto">
-              <span className="text-2xl">💰</span>
+              <Wallet className="h-6 w-6 text-muted-foreground/40" />
             </div>
             <div>
               <p className="text-[13px] font-bold">Belum ada aset</p>

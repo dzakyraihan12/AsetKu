@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Minus, Trash2, Edit2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Plus, Minus, Trash2, Edit2, ArrowUpRight, ArrowDownRight, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact, formatDate } from '@/lib/utils';
@@ -103,7 +103,7 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
             <h4 className="text-[10px] text-muted-foreground/45 uppercase tracking-wider font-bold">Riwayat Transaksi</h4>
             {assetTxs.length === 0 ? (
               <div className="text-center py-6 space-y-2">
-                <span className="text-[24px]">📝</span>
+                <FileText className="h-6 w-6 text-muted-foreground/30 mx-auto" />
                 <p className="text-[11px] text-muted-foreground/40">Belum ada transaksi</p>
               </div>
             ) : (

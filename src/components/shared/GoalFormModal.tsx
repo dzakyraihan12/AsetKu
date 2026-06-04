@@ -46,10 +46,10 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
     const payload = { ...data, customGroupId: data.customGroupId || undefined };
     if (editing) {
       await updateGoal(editing.id, payload);
-      toast('Target berhasil diperbarui ✅');
+      toast('Target berhasil diperbarui');
     } else {
       await addGoal(payload);
-      toast('Target berhasil dibuat 🎯');
+      toast('Target berhasil dibuat');
     }
     onClose();
   };

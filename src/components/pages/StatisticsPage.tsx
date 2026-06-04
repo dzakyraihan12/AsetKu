@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Award, Flame, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Award, Flame, ArrowUpRight, BarChart3 } from 'lucide-react';
 import { useStore } from '@/store';
 import { formatCompact } from '@/lib/utils';
 import { GrowthChart } from '@/components/shared/GrowthChart';
@@ -58,7 +58,7 @@ export function StatisticsPage() {
       <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card">
         <div className="relative z-10">
           <div className="flex items-center gap-2">
-            <span className="text-[18px]">📊</span>
+            <BarChart3 className="h-4 w-4 text-white/80" />
             <h1 className="text-[16px] font-extrabold text-white tracking-tight">Insight</h1>
           </div>
           <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Pantau pertumbuhan wealth kamu</p>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Rocket } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface OnboardingProps {
@@ -58,7 +59,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             disabled={!name.trim()}
             className="w-full h-12 rounded-full btn-gold text-[#3d2e00] font-bold text-[13px] shadow-md shadow-amber-500/25 disabled:opacity-30 disabled:pointer-events-none active:scale-[0.97] transition-transform"
           >
-            Mulai Sekarang 🚀
+            Mulai Sekarang <Rocket className="inline h-3.5 w-3.5 ml-1" />
           </button>
         </form>
       </motion.div>

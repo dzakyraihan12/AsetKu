@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
-import { formatCompact, calculateProgress } from '@/lib/utils';
+import { formatCompact, calculateProgress, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { CircularProgress, ProgressBar } from '@/components/ui/Progress';
+import { CircularProgress } from '@/components/ui/Progress';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
 import { Confetti } from '@/components/shared/Confetti';
 import { differenceInMonths, addMonths, format, differenceInDays } from 'date-fns';
@@ -39,7 +39,9 @@ export function GoalsPage() {
     const avgMonthly = totalGrowth / months;
     if (avgMonthly <= 0) return null;
     const remaining = target - current;
+    if (remaining <= 0) return null;
     const monthsNeeded = Math.ceil(remaining / avgMonthly);
+    if (!isFinite(monthsNeeded) || monthsNeeded > 1200) return null;
     return format(addMonths(new Date(), monthsNeeded), 'MMM yyyy');
   };
 
@@ -50,7 +52,7 @@ export function GoalsPage() {
         <div className="flex items-center justify-between relative z-10">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[18px]">🎯</span>
+              <Target className="h-4 w-4 text-white/80" />
               <h1 className="text-[16px] font-extrabold text-white tracking-tight">Target</h1>
             </div>
             <p className="text-[11px] text-white/45 mt-1 ml-[34px]">{goals.length} target aktif</p>
@@ -68,7 +70,7 @@ export function GoalsPage() {
               <p className="text-[17px] font-extrabold text-white number-display mt-1">{formatCompact(totalValue)}</p>
             </div>
             <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-              <p className="text-[9px] text-amber-300/50 uppercase font-bold tracking-wider">Target 🏅</p>
+              <p className="text-[9px] text-amber-300/50 uppercase font-bold tracking-wider">Target</p>
               <p className="text-[17px] font-extrabold text-amber-300 number-display mt-1">
                 {formatCompact(Math.max(...goals.map(g => g.targetAmount)))}
               </p>
@@ -161,7 +163,7 @@ export function GoalsPage() {
                             ) : (
                               <>
                                 <Calendar className="h-3 w-3" />
-                                {daysLeft > 0 ? `${daysLeft} hari lagi` : '⚠️ Overdue'}
+                                {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Overdue'}
                               </>
                             )}
                           </p>
@@ -193,20 +195,76 @@ export function GoalsPage() {
                       </div>
                     </div>
 
-                    <ProgressBar value={progress} size="md" variant={isComplete ? 'success' : 'gradient'} />
+                    {/* Enhanced Progress Bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground/40 font-medium">{formatCompact(current)}</span>
+                        <span className="text-[10px] font-bold text-primary/70 number-display">{progress}%</span>
+                        <span className="text-[10px] text-muted-foreground/40 font-medium">{formatCompact(goal.targetAmount)}</span>
+                      </div>
+                      <div className="relative">
+                        <div className={cn(
+                          'w-full h-3 rounded-full overflow-hidden',
+                          isComplete ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-surface-secondary'
+                        )}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(progress, 100)}%` }}
+                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            className={cn(
+                              'h-full rounded-full relative',
+                              isComplete
+                                ? 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400'
+                                : progress >= 75
+                                  ? 'bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500'
+                                  : progress >= 50
+                                    ? 'bg-gradient-to-r from-sky-400 to-blue-500'
+                                    : 'bg-gradient-to-r from-sky-300 to-sky-500'
+                            )}
+                          >
+                            {progress > 8 && !isComplete && (
+                              <motion.div
+                                className="absolute inset-0 rounded-full opacity-50"
+                                style={{
+                                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                                  backgroundSize: '200% 100%',
+                                }}
+                                animate={{ backgroundPosition: ['100% 0%', '-100% 0%'] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                              />
+                            )}
+                          </motion.div>
+                        </div>
+                        {/* Milestone markers */}
+                        {!isComplete && (
+                          <div className="absolute inset-0 flex items-center pointer-events-none">
+                            {[25, 50, 75].map((milestone) => (
+                              <div
+                                key={milestone}
+                                className={cn(
+                                  'absolute top-1/2 -translate-y-1/2 w-[2px] h-2 rounded-full transition-colors',
+                                  progress >= milestone ? 'bg-white/40' : 'bg-border/30'
+                                )}
+                                style={{ left: `${milestone}%` }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-3">
-                      <div className="bg-surface-secondary/60 rounded-xl p-2.5 border border-border/8">
-                        <p className="text-[8px] text-muted-foreground/35 uppercase font-bold">Sekarang</p>
+                    <div className="grid grid-cols-3 gap-2 mt-2.5">
+                      <div className="bg-surface-secondary/60 rounded-xl p-2 border border-border/8 text-center">
+                        <p className="text-[8px] text-muted-foreground/35 uppercase font-bold">Tercapai</p>
                         <p className="text-[12px] font-bold number-display mt-0.5">{formatCompact(current)}</p>
                       </div>
-                      <div className="bg-surface-secondary/60 rounded-xl p-2.5 border border-border/8">
-                        <p className="text-[8px] text-primary/50 uppercase font-bold">Target</p>
-                        <p className="text-[12px] font-bold number-display mt-0.5 text-primary">{formatCompact(goal.targetAmount)}</p>
-                      </div>
-                      <div className="bg-surface-secondary/60 rounded-xl p-2.5 border border-border/8">
+                      <div className="bg-surface-secondary/60 rounded-xl p-2 border border-border/8 text-center">
                         <p className="text-[8px] text-amber-600/50 dark:text-amber-400/50 uppercase font-bold">Kurang</p>
                         <p className="text-[12px] font-bold number-display mt-0.5 text-amber-600 dark:text-amber-400">{formatCompact(remaining)}</p>
+                      </div>
+                      <div className="bg-surface-secondary/60 rounded-xl p-2 border border-border/8 text-center">
+                        <p className="text-[8px] text-primary/50 uppercase font-bold">Target</p>
+                        <p className="text-[12px] font-bold number-display mt-0.5 text-primary">{formatCompact(goal.targetAmount)}</p>
                       </div>
                     </div>
 

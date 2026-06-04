@@ -41,10 +41,10 @@ export function GroupFormModal({ open, onClose, editId }: Props) {
     if (!name.trim() || selectedIds.length === 0) return;
     if (editing) {
       await updateGroup(editing.id, name.trim(), selectedIds);
-      toast('Grup berhasil diperbarui ✅');
+      toast('Grup berhasil diperbarui');
     } else {
       await addGroup(name.trim(), selectedIds);
-      toast('Grup berhasil dibuat 📂');
+      toast('Grup berhasil dibuat');
     }
     onClose();
   };

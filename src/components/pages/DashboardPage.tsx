@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package, Trophy, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact, calculateProgress } from '@/lib/utils';
@@ -10,10 +10,12 @@ import { useNavigate } from '@/hooks/useNavigation';
 import { ProgressBar } from '@/components/ui/Progress';
 import { GrowthChart } from '@/components/shared/GrowthChart';
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'Cash': '💵', 'Rekening Bank': '🏦', 'Deposito': '🔒', 'Saham': '📈',
-  'Crypto': '₿', 'Properti': '🏠', 'Kendaraan': '🚗', 'Emas': '✨',
-  'Piutang': '📋', 'Lainnya': '📦',
+import type { LucideIcon } from 'lucide-react';
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  'Cash': Banknote, 'Rekening Bank': Landmark, 'Deposito': Lock, 'Saham': TrendingUp,
+  'Crypto': Bitcoin, 'Properti': Home, 'Kendaraan': Car, 'Emas': Sparkles,
+  'Piutang': ClipboardList, 'Lainnya': Package,
 };
 
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
@@ -74,10 +76,10 @@ export function DashboardPage({ userName }: { userName: string | null }) {
 
   const getGreeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return { text: 'Pagi', emoji: '☀️' };
-    if (h < 17) return { text: 'Siang', emoji: '🌤️' };
-    if (h < 20) return { text: 'Sore', emoji: '🌅' };
-    return { text: 'Malam', emoji: '🌙' };
+    if (h < 12) return { text: 'Pagi', icon: Sun };
+    if (h < 17) return { text: 'Siang', icon: CloudSun };
+    if (h < 20) return { text: 'Sore', icon: Sunset };
+    return { text: 'Malam', icon: Moon };
   };
 
   const greeting = getGreeting();
@@ -94,7 +96,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
                 <span className="text-[12px] font-bold text-white">{userName ? userName.slice(0, 2).toUpperCase() : 'U'}</span>
               </div>
               <div>
-                <p className="text-[11px] text-white/50 font-medium">{greeting.emoji} Selamat {greeting.text}</p>
+                <p className="text-[11px] text-white/50 font-medium flex items-center gap-1"><greeting.icon className="h-3 w-3 text-white/60" /> Selamat {greeting.text}</p>
                 <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
               </div>
             </div>
@@ -163,7 +165,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
             <div className="mt-4 bg-white/[0.06] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06] relative z-10">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[14px]">🎯</span>
+                  <Target className="h-3.5 w-3.5 text-white/60" />
                   <span className="text-[11px] text-white/60 font-semibold">{primaryGoal.name}</span>
                 </div>
                 <span className="text-[12px] text-white font-extrabold number-display">{progress}%</span>
@@ -182,16 +184,16 @@ export function DashboardPage({ userName }: { userName: string | null }) {
       <motion.section variants={fadeUp} className="px-4 mt-3">
         <div className="flex gap-2">
           {[
-            { icon: '💰', label: 'Tambah Aset', tab: 'assets' as const },
-            { icon: '📝', label: 'Transaksi', tab: 'assets' as const },
-            { icon: '🎯', label: 'Buat Target', tab: 'goals' as const },
+            { icon: PlusCircle, label: 'Tambah Aset', tab: 'assets' as const },
+            { icon: Receipt, label: 'Transaksi', tab: 'assets' as const },
+            { icon: Crosshair, label: 'Buat Target', tab: 'goals' as const },
           ].map((action) => (
             <button
               key={action.label}
               onClick={() => navigate(action.tab)}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl btn-gradient text-white press-scale shadow-sm shadow-sky-900/15 hover:brightness-110 transition-all"
             >
-              <span className="text-[13px]">{action.icon}</span>
+              <action.icon className="h-3.5 w-3.5 text-white/90" />
               <span className="text-[10px] font-bold text-white/90">{action.label}</span>
             </button>
           ))}
@@ -202,7 +204,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
       <motion.section variants={fadeUp} className="px-3 mt-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-[14px]">📈</span>
+            <TrendingUp className="h-3.5 w-3.5 text-primary/60" />
             <span className="text-[12px] font-bold text-foreground">Pertumbuhan</span>
           </div>
           <span className="chip-accent">
@@ -218,7 +220,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
       {categoryAllocation.length > 0 && (
         <motion.section variants={fadeUp} className="mt-4">
           <div className="px-3 mb-2 flex items-center gap-2">
-            <span className="text-[14px]">🍕</span>
+            <PieChart className="h-3.5 w-3.5 text-primary/60" />
             <span className="text-[12px] font-bold text-foreground">Alokasi Aset</span>
           </div>
           {/* Allocation Bar */}
@@ -271,7 +273,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         <motion.section variants={fadeUp} className="px-3 mt-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-[14px]">🏆</span>
+              <Trophy className="h-3.5 w-3.5 text-amber-500/70" />
               <span className="text-[12px] font-bold text-foreground">Top Aset</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
@@ -279,7 +281,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
           <div className="card-elevated overflow-hidden divide-y divide-border/8">
             {topAssets.map((asset, idx) => {
               const catName = categories.find(c => c.id === asset.categoryId)?.name ?? '';
-              const icon = CATEGORY_ICONS[catName] || '📦';
+              const IconComp = CATEGORY_ICONS[catName] || Package;
               const pct = totalValue > 0 ? Math.round((asset.value / totalValue) * 100) : 0;
               return (
                 <motion.div
@@ -291,7 +293,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-surface-secondary flex items-center justify-center border border-border/15">
-                      <span className="text-[14px]">{icon}</span>
+                      <IconComp className="h-4 w-4 text-muted-foreground/60" />
                     </div>
                     <div>
                       <p className="text-[12px] font-semibold">{asset.name}</p>
@@ -315,7 +317,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
       {customGroups.length > 0 && (
         <motion.section variants={fadeUp} className="px-3 mt-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[14px]">📂</span>
+            <FolderOpen className="h-3.5 w-3.5 text-primary/60" />
             <span className="text-[12px] font-bold text-foreground">Grup Kustom</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -349,7 +351,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         <motion.section variants={fadeUp} className="px-3 mt-4 pb-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-[14px]">⚡</span>
+              <Activity className="h-3.5 w-3.5 text-primary/60" />
               <span className="text-[12px] font-bold text-foreground">Aktivitas Terbaru</span>
             </div>
             <button onClick={() => navigate('assets')} className="text-[10px] font-bold text-primary press-scale">
@@ -404,7 +406,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
               onClick={() => navigate('assets')}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full btn-gold text-[#3d2e00] text-[11px] font-bold shadow-md shadow-amber-500/20 press-scale"
             >
-              💰 Tambah Aset Pertama
+              <Wallet className="h-3.5 w-3.5" /> Tambah Aset Pertama
             </button>
           </div>
         </motion.section>
