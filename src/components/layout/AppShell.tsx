@@ -99,9 +99,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background" style={{ height: '100dvh' }}>
-      <main className="flex-1 overflow-y-auto no-scrollbar relative" style={{ paddingBottom: 'calc(68px + env(safe-area-inset-bottom, 0px))' }}>
+      <main className="flex-1 overflow-y-auto no-scrollbar relative" style={{ paddingBottom: '64px' }}>
         {/* Bottom fade indicator */}
-        <div className="pointer-events-none fixed left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10" style={{ bottom: 'calc(62px + env(safe-area-inset-bottom, 0px))' }} />
+        <div className="pointer-events-none fixed left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10" style={{ bottom: '58px' }} />
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -116,8 +116,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
-        <div className="mx-auto max-w-lg px-4" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom" style={{ bottom: '-4px' }}>
+        <div className="mx-auto max-w-lg px-4 pb-1">
           <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;
