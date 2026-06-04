@@ -27,6 +27,7 @@ const tabs = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [direction, setDirection] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -60,16 +61,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handler = (e: Event) => {
       const tab = (e as CustomEvent).detail as TabId;
+      const currentIdx = tabs.findIndex(t => t.id === activeTab);
+      const nextIdx = tabs.findIndex(t => t.id === tab);
+      setDirection(nextIdx > currentIdx ? 1 : -1);
       setActiveTab(tab);
     };
     window.addEventListener('navigate-tab', handler);
     return () => window.removeEventListener('navigate-tab', handler);
-  }, []);
+  }, [activeTab]);
 
   const handleTabChange = useCallback((id: TabId) => {
+    const currentIdx = tabs.findIndex(t => t.id === activeTab);
+    const nextIdx = tabs.findIndex(t => t.id === id);
+    setDirection(nextIdx > currentIdx ? 1 : -1);
     haptic('light');
     setActiveTab(id);
-  }, []);
+  }, [activeTab]);
 
   if (showSplash) {
     return <SplashScreen />;
@@ -102,13 +109,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-y-auto no-scrollbar relative" style={{ paddingBottom: '64px' }}>
         {/* Bottom fade indicator */}
         <div className="pointer-events-none fixed left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10" style={{ bottom: '58px' }} />
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
+            initial={{ opacity: 0, x: direction * 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction * -40 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
           >
             {renderPage()}
           </motion.div>

@@ -78,7 +78,12 @@ export function CircularProgress({ value, size = 40, strokeWidth = 3, className,
         />
       </svg>
       {showLabel && (
-        <span className={cn('absolute text-micro font-bold number-display', isNearComplete && 'text-amber-600 dark:text-amber-400')}>{Math.round(clamped)}%</span>
+        <span
+          className={cn('absolute font-bold number-display leading-none', isNearComplete && 'text-amber-600 dark:text-amber-400')}
+          style={{ fontSize: `${Math.max(size * 0.22, 8)}px` }}
+        >
+          {Math.round(clamped)}%
+        </span>
       )}
     </div>
   );
