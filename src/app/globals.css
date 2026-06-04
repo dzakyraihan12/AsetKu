@@ -216,13 +216,6 @@ html {
   overflow: hidden;
 }
 
-@media all and (display-mode: standalone) {
-  .hero-gradient {
-    margin-top: calc(-1 * env(safe-area-inset-top, 0px));
-    padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
-  }
-}
-
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'AsetKu',
   },
 };
@@ -28,11 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#0d3553' },
-    { media: '(prefers-color-scheme: dark)', color: '#071d2e' },
-  ],
+  themeColor: '#0d3553',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
