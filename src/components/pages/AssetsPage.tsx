@@ -74,7 +74,7 @@ export function AssetsPage() {
       {/* Search inside hero */}
       <div className="mt-3.5">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none z-10" />
           <input
             placeholder="Cari aset..."
             value={search}

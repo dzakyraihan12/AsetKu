@@ -30,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isBlurred, setIsBlurred] = useState(false);
   const { loadAll, isLoading } = useStore();
 
   useEffect(() => {
@@ -64,6 +65,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('navigate-tab', handler);
     return () => window.removeEventListener('navigate-tab', handler);
+  }, []);
+
+  // Blur when app goes to background (app switcher) & show splash on return
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        setIsBlurred(true);
+      } else if (document.visibilityState === 'visible') {
+        // Show splash on return
+        setShowSplash(true);
+        setIsBlurred(false);
+        const timer = setTimeout(() => setShowSplash(false), 1400);
+        return () => clearTimeout(timer);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   const handleTabChange = useCallback((id: TabId) => {
@@ -143,6 +161,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </nav>
+
+      {/* Privacy blur overlay when app is in background/app switcher */}
+      {isBlurred && (
+        <div className="fixed inset-0 z-[9998] backdrop-blur-xl bg-background/60" />
+      )}
     </div>
   );
 }
