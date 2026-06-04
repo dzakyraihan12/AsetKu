@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { CircularProgress } from '@/components/ui/Progress';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
 import { Confetti } from '@/components/shared/Confetti';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { differenceInMonths, addMonths, format, differenceInDays } from 'date-fns';
 
 const fadeUp = {
@@ -45,40 +46,41 @@ export function GoalsPage() {
     return format(addMonths(new Date(), monthsNeeded), 'MMM yyyy');
   };
 
-  return (
-    <div className="max-w-lg mx-auto">
-      {/* Hero Header */}
-      <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card">
-        <div className="flex items-center justify-between relative z-10">
-          <div>
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-white/80" />
-              <h1 className="text-[16px] font-extrabold text-white tracking-tight">Target</h1>
-            </div>
-            <p className="text-[11px] text-white/45 mt-1 ml-[34px]">{goals.length} target aktif</p>
+  const headerContent = (
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-white/80" />
+            <h1 className="text-[16px] font-extrabold text-white tracking-tight">Target</h1>
           </div>
-          <Button variant="gold" size="sm" onClick={() => { setEditId(null); setShowForm(true); }}>
-            <Plus className="h-3.5 w-3.5" /> Buat
-          </Button>
+          <p className="text-[11px] text-white/45 mt-1 ml-[34px]">{goals.length} target aktif</p>
         </div>
-
-        {/* Summary */}
-        {goals.length > 0 && (
-          <div className="mt-4 flex gap-3 relative z-10">
-            <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-              <p className="text-[9px] text-white/30 uppercase font-bold tracking-wider">Sekarang</p>
-              <p className="text-[17px] font-extrabold text-white number-display mt-1">{formatCompact(totalValue)}</p>
-            </div>
-            <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-              <p className="text-[9px] text-amber-300/50 uppercase font-bold tracking-wider">Target</p>
-              <p className="text-[17px] font-extrabold text-amber-300 number-display mt-1">
-                {formatCompact(Math.max(...goals.map(g => g.targetAmount)))}
-              </p>
-            </div>
-          </div>
-        )}
+        <Button variant="gold" size="sm" onClick={() => { setEditId(null); setShowForm(true); }}>
+          <Plus className="h-3.5 w-3.5" /> Buat
+        </Button>
       </div>
 
+      {/* Summary */}
+      {goals.length > 0 && (
+        <div className="mt-4 flex gap-3">
+          <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+            <p className="text-[9px] text-white/30 uppercase font-bold tracking-wider">Sekarang</p>
+            <p className="text-[17px] font-extrabold text-white number-display mt-1">{formatCompact(totalValue)}</p>
+          </div>
+          <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+            <p className="text-[9px] text-amber-300/50 uppercase font-bold tracking-wider">Target</p>
+            <p className="text-[17px] font-extrabold text-amber-300 number-display mt-1">
+              {formatCompact(Math.max(...goals.map(g => g.targetAmount)))}
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <PageLayout pageKey="goals" headerContent={headerContent}>
       {goals.length === 0 ? (
         <div className="text-center py-16 space-y-4 px-6">
           <motion.div
@@ -287,6 +289,6 @@ export function GoalsPage() {
       )}
 
       <GoalFormModal open={showForm} onClose={() => setShowForm(false)} editId={editId} />
-    </div>
+    </PageLayout>
   );
 }

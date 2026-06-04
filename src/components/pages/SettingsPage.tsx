@@ -9,6 +9,7 @@ import { db } from '@/db';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { GroupFormModal } from '@/components/shared/GroupFormModal';
+import { PageLayout } from '@/components/layout/PageLayout';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 4 },
@@ -84,23 +85,24 @@ export function SettingsPage() {
     input.click();
   };
 
+  const headerContent = (
+    <div>
+      <div className="flex items-center gap-2">
+        <Settings className="h-4 w-4 text-white/80" />
+        <h1 className="text-[16px] font-extrabold text-white tracking-tight">Pengaturan</h1>
+      </div>
+      <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Personalisasi pengalaman kamu</p>
+    </div>
+  );
+
   return (
+    <PageLayout pageKey="settings" headerContent={headerContent}>
     <motion.div
-      className="max-w-lg mx-auto pb-4"
+      className="pb-4"
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.03 } } }}
     >
-      {/* Header with gradient */}
-      <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-white/80" />
-            <h1 className="text-[16px] font-extrabold text-white tracking-tight">Pengaturan</h1>
-          </div>
-          <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Personalisasi pengalaman kamu</p>
-        </div>
-      </div>
 
       {/* Theme */}
       <motion.section variants={fadeUp} className="px-3 pt-3 pb-3">
@@ -239,5 +241,6 @@ export function SettingsPage() {
 
       <GroupFormModal open={showGroupForm} onClose={() => setShowGroupForm(false)} editId={editGroupId} />
     </motion.div>
+    </PageLayout>
   );
 }

@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, Award, Flame, ArrowUpRight, BarChart3 } from 
 import { useStore } from '@/store';
 import { formatCompact } from '@/lib/utils';
 import { GrowthChart } from '@/components/shared/GrowthChart';
+import { PageLayout } from '@/components/layout/PageLayout';
 
 const COLORS = ['#135581', '#24AAE1', '#22C55E', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'];
 
@@ -47,48 +48,50 @@ export function StatisticsPage() {
   const avgMonthly = Math.round(totalGrowth6m / 6);
   const bestMonth = [...monthlyGrowth].sort((a, b) => b.growth - a.growth)[0];
 
+  const headerContent = (
+    <>
+      <div>
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-white/80" />
+          <h1 className="text-[16px] font-extrabold text-white tracking-tight">Insight</h1>
+        </div>
+        <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Pantau pertumbuhan wealth kamu</p>
+      </div>
+      {/* Key Stats inside hero */}
+      <div className="grid grid-cols-2 gap-2.5 mt-4">
+        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="h-5 w-5 rounded-lg bg-emerald-400/15 flex items-center justify-center">
+              <TrendingUp className="h-3 w-3 text-emerald-300" />
+            </div>
+            <p className="text-[9px] text-white/35 uppercase font-bold">Avg/bulan</p>
+          </div>
+          <p className={`text-[16px] font-extrabold number-display ${avgMonthly >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            {avgMonthly >= 0 ? '+' : ''}{formatCompact(avgMonthly)}
+          </p>
+        </div>
+        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="h-5 w-5 rounded-lg bg-amber-400/15 flex items-center justify-center">
+              <Award className="h-3 w-3 text-amber-300" />
+            </div>
+            <p className="text-[9px] text-white/35 uppercase font-bold">Terbaik</p>
+          </div>
+          <p className="text-[16px] font-extrabold number-display text-emerald-300">+{formatCompact(bestMonth?.growth ?? 0)}</p>
+          <p className="text-[9px] text-white/25 mt-0.5 font-medium">{bestMonth?.month}</p>
+        </div>
+      </div>
+    </>
+  );
+
   return (
+    <PageLayout pageKey="analytics" headerContent={headerContent}>
     <motion.div
-      className="max-w-lg mx-auto pb-4"
+      className="pb-4"
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.03 } } }}
     >
-      {/* Header with gradient */}
-      <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-white/80" />
-            <h1 className="text-[16px] font-extrabold text-white tracking-tight">Insight</h1>
-          </div>
-          <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Pantau pertumbuhan wealth kamu</p>
-        </div>
-        {/* Key Stats inside hero */}
-        <div className="grid grid-cols-2 gap-2.5 mt-4 relative z-10">
-          <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <div className="h-5 w-5 rounded-lg bg-emerald-400/15 flex items-center justify-center">
-                <TrendingUp className="h-3 w-3 text-emerald-300" />
-              </div>
-              <p className="text-[9px] text-white/35 uppercase font-bold">Avg/bulan</p>
-            </div>
-            <p className={`text-[16px] font-extrabold number-display ${avgMonthly >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-              {avgMonthly >= 0 ? '+' : ''}{formatCompact(avgMonthly)}
-            </p>
-          </div>
-          <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <div className="h-5 w-5 rounded-lg bg-amber-400/15 flex items-center justify-center">
-                <Award className="h-3 w-3 text-amber-300" />
-              </div>
-              <p className="text-[9px] text-white/35 uppercase font-bold">Terbaik</p>
-            </div>
-            <p className="text-[16px] font-extrabold number-display text-emerald-300">+{formatCompact(bestMonth?.growth ?? 0)}</p>
-            <p className="text-[9px] text-white/25 mt-0.5 font-medium">{bestMonth?.month}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Chart */}
       <motion.section variants={fadeUp} className="px-3 pt-3">
         <div className="flex items-center justify-between mb-1.5">
@@ -177,5 +180,6 @@ export function StatisticsPage() {
         </div>
       </motion.section>
     </motion.div>
+    </PageLayout>
   );
 }

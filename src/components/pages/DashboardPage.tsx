@@ -9,6 +9,7 @@ import { useCountUp } from '@/hooks/useCountUp';
 import { useNavigate } from '@/hooks/useNavigation';
 import { ProgressBar } from '@/components/ui/Progress';
 import { GrowthChart } from '@/components/shared/GrowthChart';
+import { PageLayout } from '@/components/layout/PageLayout';
 
 import type { LucideIcon } from 'lucide-react';
 
@@ -84,101 +85,94 @@ export function DashboardPage({ userName }: { userName: string | null }) {
 
   const greeting = getGreeting();
 
-  return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-lg mx-auto pb-2">
-      {/* Hero Wealth Header */}
-      <motion.section variants={fadeUp}>
-        <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card relative">
-          {/* Top Row: Greeting */}
-          <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-md shadow-lg shadow-black/10">
-                <span className="text-[12px] font-bold text-white">{userName ? userName.slice(0, 2).toUpperCase() : 'U'}</span>
-              </div>
-              <div>
-                <p className="text-[11px] text-white/50 font-medium flex items-center gap-1"><greeting.icon className="h-3 w-3 text-white/60" /> Selamat {greeting.text}</p>
-                <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
-              </div>
-            </div>
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
-                monthChange >= 0
-                  ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25'
-                  : 'bg-red-400/20 text-red-200 border border-red-400/25'
-              }`}
-            >
-              {monthChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-              {monthChange >= 0 ? '+' : ''}{monthPct}%
-            </motion.div>
+  const headerContent = (
+    <>
+      {/* Top Row: Greeting */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-md shadow-lg shadow-black/10">
+            <span className="text-[12px] font-bold text-white">{userName ? userName.slice(0, 2).toUpperCase() : 'U'}</span>
           </div>
-
-          {/* Wealth Display */}
-          <div className="mt-5 relative z-10">
-            <div className="flex items-center gap-2">
-              <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Kekayaan</p>
-              <button onClick={toggleHideBalance} className="p-1 rounded-full hover:bg-white/10 transition-colors">
-                {hideBalance
-                  ? <EyeOff className="h-3.5 w-3.5 text-white/40" />
-                  : <Eye className="h-3.5 w-3.5 text-white/40" />
-                }
-              </button>
-            </div>
-            <motion.p
-              className="text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {hideBalance ? '••••••••' : formatCurrency(animatedTotal)}
-            </motion.p>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-[11px] font-semibold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-                {hideBalance ? '•••' : `${monthChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(monthChange))}`}
-              </span>
-              <span className="text-[10px] text-white/25">bulan ini</span>
-            </div>
+          <div>
+            <p className="text-[11px] text-white/50 font-medium flex items-center gap-1"><greeting.icon className="h-3 w-3 text-white/60" /> Selamat {greeting.text}</p>
+            <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
           </div>
-
-          {/* Quick Stats Pills */}
-          <div className="mt-4 flex gap-2 relative z-10">
-            <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
-              <p className="text-[9px] text-white/30 font-bold uppercase">Aset</p>
-              <p className="text-[16px] font-extrabold text-white number-display">{assets.length}</p>
-            </div>
-            <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
-              <p className="text-[9px] text-white/30 font-bold uppercase">Kategori</p>
-              <p className="text-[16px] font-extrabold text-white number-display">{categoryAllocation.length}</p>
-            </div>
-            <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
-              <p className="text-[9px] text-white/30 font-bold uppercase">Growth</p>
-              <p className={`text-[16px] font-extrabold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-                {monthChange >= 0 ? '+' : ''}{formatCompact(monthChange)}
-              </p>
-            </div>
-          </div>
-
-          {/* Goal Progress */}
-          {primaryGoal && (
-            <div className="mt-4 bg-white/[0.06] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06] relative z-10">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Target className="h-3.5 w-3.5 text-white/60" />
-                  <span className="text-[11px] text-white/60 font-semibold">{primaryGoal.name}</span>
-                </div>
-                <span className="text-[12px] text-white font-extrabold number-display">{progress}%</span>
-              </div>
-              <ProgressBar value={progress} size="sm" variant="white" />
-              <div className="flex justify-between mt-1.5">
-                <span className="text-[9px] text-white/25 number-display font-medium">{formatCompact(totalValue)}</span>
-                <span className="text-[9px] text-amber-300/70 number-display font-bold">{formatCompact(primaryGoal.targetAmount)}</span>
-              </div>
-            </div>
-          )}
         </div>
-      </motion.section>
+        <div
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
+            monthChange >= 0
+              ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25'
+              : 'bg-red-400/20 text-red-200 border border-red-400/25'
+          }`}
+        >
+          {monthChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          {monthChange >= 0 ? '+' : ''}{monthPct}%
+        </div>
+      </div>
+
+      {/* Wealth Display */}
+      <div className="mt-5">
+        <div className="flex items-center gap-2">
+          <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Kekayaan</p>
+          <button onClick={toggleHideBalance} className="p-1 rounded-full hover:bg-white/10 transition-colors">
+            {hideBalance
+              ? <EyeOff className="h-3.5 w-3.5 text-white/40" />
+              : <Eye className="h-3.5 w-3.5 text-white/40" />
+            }
+          </button>
+        </div>
+        <p className="text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none">
+          {hideBalance ? '••••••••' : formatCurrency(animatedTotal)}
+        </p>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className={`text-[11px] font-semibold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            {hideBalance ? '•••' : `${monthChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(monthChange))}`}
+          </span>
+          <span className="text-[10px] text-white/25">bulan ini</span>
+        </div>
+      </div>
+
+      {/* Quick Stats Pills */}
+      <div className="mt-4 flex gap-2">
+        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
+          <p className="text-[9px] text-white/30 font-bold uppercase">Aset</p>
+          <p className="text-[16px] font-extrabold text-white number-display">{assets.length}</p>
+        </div>
+        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
+          <p className="text-[9px] text-white/30 font-bold uppercase">Kategori</p>
+          <p className="text-[16px] font-extrabold text-white number-display">{categoryAllocation.length}</p>
+        </div>
+        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
+          <p className="text-[9px] text-white/30 font-bold uppercase">Growth</p>
+          <p className={`text-[16px] font-extrabold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            {monthChange >= 0 ? '+' : ''}{formatCompact(monthChange)}
+          </p>
+        </div>
+      </div>
+
+      {/* Goal Progress */}
+      {primaryGoal && (
+        <div className="mt-4 bg-white/[0.06] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Target className="h-3.5 w-3.5 text-white/60" />
+              <span className="text-[11px] text-white/60 font-semibold">{primaryGoal.name}</span>
+            </div>
+            <span className="text-[12px] text-white font-extrabold number-display">{progress}%</span>
+          </div>
+          <ProgressBar value={progress} size="sm" variant="white" />
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[9px] text-white/25 number-display font-medium">{formatCompact(totalValue)}</span>
+            <span className="text-[9px] text-amber-300/70 number-display font-bold">{formatCompact(primaryGoal.targetAmount)}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <PageLayout pageKey="overview" headerContent={headerContent}>
+      <motion.div variants={stagger} initial="hidden" animate="show" className="pb-2">
 
       {/* Quick Actions */}
       <motion.section variants={fadeUp} className="px-4 mt-3">
@@ -412,5 +406,6 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         </motion.section>
       )}
     </motion.div>
+    </PageLayout>
   );
 }
