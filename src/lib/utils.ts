@@ -24,6 +24,18 @@ export function formatCompact(amount: number): string {
   return `${sign}Rp${abs}`;
 }
 
+/** Format number as Rupiah with dot separator (e.g. 1.500.000) for display in inputs */
+export function formatRupiahInput(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/** Parse Rupiah formatted string back to number */
+export function parseRupiahInput(value: string): number {
+  return parseInt(value.replace(/\./g, ''), 10) || 0;
+}
+
 export function formatDate(date: string): string {
   return new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',

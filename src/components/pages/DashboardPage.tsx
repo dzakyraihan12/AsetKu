@@ -132,41 +132,23 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         </div>
       </div>
 
-      {/* Quick Stats Pills */}
-      <div className="mt-4 flex gap-2">
-        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
-          <p className="text-[9px] text-white/30 font-bold uppercase">Aset</p>
-          <p className="text-[16px] font-extrabold text-white number-display">{assets.length}</p>
+      {/* Quick Stats Pills - compact */}
+      <div className="mt-3 flex gap-1.5">
+        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-xl px-2.5 py-2 border border-white/[0.08]">
+          <p className="text-[8px] text-white/30 font-bold uppercase">Aset</p>
+          <p className="text-[14px] font-extrabold text-white number-display">{assets.length}</p>
         </div>
-        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
-          <p className="text-[9px] text-white/30 font-bold uppercase">Kategori</p>
-          <p className="text-[16px] font-extrabold text-white number-display">{categoryAllocation.length}</p>
+        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-xl px-2.5 py-2 border border-white/[0.08]">
+          <p className="text-[8px] text-white/30 font-bold uppercase">Kategori</p>
+          <p className="text-[14px] font-extrabold text-white number-display">{categoryAllocation.length}</p>
         </div>
-        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-2xl px-3 py-2.5 border border-white/[0.08]">
-          <p className="text-[9px] text-white/30 font-bold uppercase">Growth</p>
-          <p className={`text-[16px] font-extrabold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+        <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-xl px-2.5 py-2 border border-white/[0.08]">
+          <p className="text-[8px] text-white/30 font-bold uppercase">Growth</p>
+          <p className={`text-[14px] font-extrabold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
             {monthChange >= 0 ? '+' : ''}{formatCompact(monthChange)}
           </p>
         </div>
       </div>
-
-      {/* Goal Progress */}
-      {primaryGoal && (
-        <div className="mt-4 bg-white/[0.06] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Target className="h-3.5 w-3.5 text-white/60" />
-              <span className="text-[11px] text-white/60 font-semibold">{primaryGoal.name}</span>
-            </div>
-            <span className="text-[12px] text-white font-extrabold number-display">{progress}%</span>
-          </div>
-          <ProgressBar value={progress} size="sm" variant="white" />
-          <div className="flex justify-between mt-1.5">
-            <span className="text-[9px] text-white/25 number-display font-medium">{formatCompact(totalValue)}</span>
-            <span className="text-[9px] text-amber-300/70 number-display font-bold">{formatCompact(primaryGoal.targetAmount)}</span>
-          </div>
-        </div>
-      )}
     </>
   );
 
@@ -193,6 +175,26 @@ export function DashboardPage({ userName }: { userName: string | null }) {
           ))}
         </div>
       </motion.section>
+
+      {/* Goal Progress - moved to body for compact header */}
+      {primaryGoal && (
+        <motion.section variants={fadeUp} className="px-3 mt-3">
+          <div className="card-elevated p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Target className="h-3.5 w-3.5 text-primary/60" />
+                <span className="text-[11px] font-semibold">{primaryGoal.name}</span>
+              </div>
+              <span className="text-[12px] font-extrabold number-display text-primary">{progress}%</span>
+            </div>
+            <ProgressBar value={progress} size="sm" variant="gradient" />
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[9px] text-muted-foreground/40 number-display font-medium">{formatCompact(totalValue)}</span>
+              <span className="text-[9px] text-amber-600 dark:text-amber-400 number-display font-bold">{formatCompact(primaryGoal.targetAmount)}</span>
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Growth Chart */}
       <motion.section variants={fadeUp} className="px-3 mt-4">

@@ -1,19 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import { useStore } from '@/store';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/FormElements';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
 const schema = z.object({
   name: z.string().min(1, 'Nama target wajib diisi'),
-  targetAmount: z.coerce.number().min(1, 'Target minimal 1'),
+  targetAmount: z.number().min(1, 'Target minimal 1'),
   targetDate: z.string().min(1, 'Tanggal target wajib diisi'),
   customGroupId: z.string().optional(),
 });
@@ -32,8 +33,9 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const editing = editId ? goals.find((g) => g.id === editId) : null;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: { name: '', targetAmount: 0, targetDate: '', customGroupId: '' },
   });
 
   useEffect(() => {
@@ -66,7 +68,19 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
     <Modal open={open} onClose={onClose} title={editing ? 'Edit Target' : 'Buat Target'}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input label="Nama Target" placeholder="Contoh: Target 2025" {...register('name')} error={errors.name?.message} />
-        <Input label="Nominal Target (Rp)" type="number" placeholder="1000000000" {...register('targetAmount')} error={errors.targetAmount?.message} />
+        <Controller
+          name="targetAmount"
+          control={control}
+          render={({ field }) => (
+            <CurrencyInput
+              label="Nominal Target"
+              placeholder="1.000.000.000"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.targetAmount?.message}
+            />
+          )}
+        />
         <Input label="Tanggal Target" type="date" {...register('targetDate')} error={errors.targetDate?.message} />
         <Select
           label="Berdasarkan (opsional)"

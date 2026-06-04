@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { LayoutDashboard, Wallet, Target, BarChart3, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -25,13 +25,16 @@ const tabs = [
   { id: 'settings', label: 'Lainnya', icon: Settings },
 ] as const;
 
+const BACKGROUND_THRESHOLD_MS = 30_000; // 30 seconds
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showSplash, setShowSplash] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isBlurred, setIsBlurred] = useState(false);
-  const { loadAll, isLoading } = useStore();
+  const backgroundTimestamp = useRef<number>(0);
+  const { loadAll, isLoading, transactions, goals, getTotalValue } = useStore();
 
   useEffect(() => {
     const storedName = localStorage.getItem('asetku_user_name');
@@ -67,60 +70,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('navigate-tab', handler);
   }, []);
 
-  // Blur when app goes to background (app switcher) & show splash on return
-  // iOS captures screenshot before React re-renders, so we manipulate DOM directly
+  // Privacy blur & splash on return from background
   useEffect(() => {
     const blurOverlay = document.getElementById('privacy-blur-overlay');
 
     const handleBlur = () => {
-      // Synchronously show blur before iOS captures screenshot
-      if (blurOverlay) {
-        blurOverlay.style.display = 'block';
-      }
-      // Also update React state for splash on return
+      backgroundTimestamp.current = Date.now();
+      if (blurOverlay) blurOverlay.style.display = 'block';
       setIsBlurred(true);
     };
 
     const handleFocus = () => {
-      // Show splash on return
-      setShowSplash(true);
+      if (blurOverlay) blurOverlay.style.display = 'none';
       setIsBlurred(false);
-      if (blurOverlay) {
-        blurOverlay.style.display = 'none';
+
+      // Only show splash if background duration > threshold
+      const elapsed = Date.now() - backgroundTimestamp.current;
+      if (backgroundTimestamp.current > 0 && elapsed > BACKGROUND_THRESHOLD_MS) {
+        setShowSplash(true);
+        setTimeout(() => setShowSplash(false), 1400);
       }
-      const timer = setTimeout(() => setShowSplash(false), 1400);
-      return () => clearTimeout(timer);
+      backgroundTimestamp.current = 0;
     };
 
-    // visibilitychange for general case
     const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') {
-        handleBlur();
-      } else if (document.visibilityState === 'visible') {
-        handleFocus();
-      }
+      if (document.visibilityState === 'hidden') handleBlur();
+      else if (document.visibilityState === 'visible') handleFocus();
     };
-
-    // pagehide/pageshow are more reliable on iOS Safari/PWA
-    const handlePageHide = () => handleBlur();
-    const handlePageShow = () => handleFocus();
-
-    // blur/focus on window — fires when entering app switcher on iOS
-    const handleWindowBlur = () => handleBlur();
-    const handleWindowFocus = () => handleFocus();
 
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pagehide', handlePageHide);
-    window.addEventListener('pageshow', handlePageShow);
-    window.addEventListener('blur', handleWindowBlur);
-    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('pagehide', handleBlur);
+    window.addEventListener('pageshow', () => handleFocus());
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pagehide', handlePageHide);
-      window.removeEventListener('pageshow', handlePageShow);
-      window.removeEventListener('blur', handleWindowBlur);
-      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('pagehide', handleBlur);
+      window.removeEventListener('pageshow', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
@@ -128,6 +117,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     haptic('light');
     setActiveTab(id);
   }, []);
+
+  // Badge indicators
+  const hasNewTransactions = (() => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return transactions.some(t => t.date === today);
+  })();
+
+  const hasGoalNearComplete = (() => {
+    const totalValue = getTotalValue();
+    return goals.some(g => {
+      const progress = g.targetAmount > 0 ? (totalValue / g.targetAmount) * 100 : 0;
+      return progress >= 80 && progress < 100;
+    });
+  })();
 
   if (showSplash) {
     return <SplashScreen />;
@@ -155,6 +159,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const getBadge = (tabId: string) => {
+    if (tabId === 'assets' && hasNewTransactions) return true;
+    if (tabId === 'goals' && hasGoalNearComplete) return true;
+    return false;
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background" style={{ height: '100dvh' }}>
       <main className="flex-1 overflow-y-auto no-scrollbar relative" style={{ paddingBottom: '64px' }}>
@@ -169,6 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;
+              const hasBadge = getBadge(id);
               return (
                 <button
                   key={id}
@@ -182,13 +193,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                     />
                   )}
-                  <Icon
-                    className={cn(
-                      'relative z-10 h-[20px] w-[20px] transition-colors duration-200',
-                      isActive ? 'text-primary' : 'text-muted-foreground/35'
+                  <div className="relative">
+                    <Icon
+                      className={cn(
+                        'relative z-10 h-[20px] w-[20px] transition-colors duration-200',
+                        isActive ? 'text-primary' : 'text-muted-foreground/35'
+                      )}
+                      strokeWidth={isActive ? 2.2 : 1.5}
+                    />
+                    {hasBadge && (
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-400 border border-surface" />
                     )}
-                    strokeWidth={isActive ? 2.2 : 1.5}
-                  />
+                  </div>
                   <span className={cn(
                     'relative z-10 text-[9px] mt-[3px] transition-colors duration-200',
                     isActive ? 'font-bold text-primary' : 'font-medium text-muted-foreground/35'
@@ -205,7 +221,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Privacy blur overlay — always in DOM, toggled via display for instant iOS response */}
       <div
         id="privacy-blur-overlay"
-        className="fixed inset-0 z-[9998] backdrop-blur-xl bg-background/80"
+        className="fixed inset-0 z-[9998] backdrop-blur-3xl bg-background/90"
         style={{ display: isBlurred ? 'block' : 'none' }}
       />
     </div>

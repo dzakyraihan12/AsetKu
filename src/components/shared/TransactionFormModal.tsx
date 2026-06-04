@@ -1,18 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import { useStore } from '@/store';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/FormElements';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
 const schema = z.object({
-  amount: z.coerce.number().min(1, 'Nominal minimal 1'),
+  amount: z.number().min(1, 'Nominal minimal 1'),
   notes: z.string().default(''),
   date: z.string().min(1, 'Tanggal wajib diisi'),
 });
@@ -30,9 +31,9 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
   const { addTransaction } = useStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: new Date().toISOString().split('T')[0] },
+    defaultValues: { amount: 0, date: new Date().toISOString().split('T')[0], notes: '' },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -51,7 +52,19 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
   return (
     <Modal open={open} onClose={onClose} title={type === 'add' ? 'Tambah Nilai' : 'Kurangi Nilai'}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input label="Nominal (Rp)" type="number" placeholder="10000000" {...register('amount')} error={errors.amount?.message} />
+        <Controller
+          name="amount"
+          control={control}
+          render={({ field }) => (
+            <CurrencyInput
+              label="Nominal"
+              placeholder="1.000.000"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.amount?.message}
+            />
+          )}
+        />
         <Input label="Tanggal" type="date" {...register('date')} error={errors.date?.message} />
         <Textarea label="Catatan (opsional)" placeholder="Contoh: Gaji bulan Juni" {...register('notes')} />
         <Button

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
@@ -9,13 +9,14 @@ import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/FormElements';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
 const schema = z.object({
   name: z.string().min(1, 'Nama wajib diisi'),
   categoryId: z.string().min(1, 'Kategori wajib dipilih'),
-  initialValue: z.coerce.number().min(0, 'Nilai tidak boleh negatif'),
+  initialValue: z.number().min(0, 'Nilai tidak boleh negatif'),
   currency: z.string().default('IDR'),
   notes: z.string().default(''),
 });
@@ -34,8 +35,9 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const editing = editId ? assets.find((a) => a.id === editId) : null;
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { control, register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: { name: '', categoryId: '', initialValue: 0, currency: 'IDR', notes: '' },
   });
 
   const selectedCategory = watch('categoryId');
@@ -72,7 +74,7 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
 
         {/* Category Chips */}
         <div className="space-y-1.5">
-          <label className="text-[12px] font-medium text-foreground/80">Kategori</label>
+          <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide">Kategori</label>
           <div className="flex flex-wrap gap-1.5">
             {categories.map((cat) => (
               <button
@@ -94,7 +96,19 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
         </div>
 
         {!editing && (
-          <Input label="Nilai Awal (Rp)" type="number" placeholder="0" {...register('initialValue')} error={errors.initialValue?.message} />
+          <Controller
+            name="initialValue"
+            control={control}
+            render={({ field }) => (
+              <CurrencyInput
+                label="Nilai Awal"
+                placeholder="1.000.000"
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.initialValue?.message}
+              />
+            )}
+          />
         )}
 
         <Textarea label="Catatan (opsional)" placeholder="Deskripsi singkat..." {...register('notes')} />

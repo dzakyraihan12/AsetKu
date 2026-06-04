@@ -17,6 +17,33 @@ interface Props {
   onEdit: (id: string) => void;
 }
 
+function MiniSparkline({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const h = 40;
+  const w = 100;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return `${x},${y}`;
+  }).join(' ');
+  const fillPoints = `0,${h} ${points} ${w},${h}`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-10" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={fillPoints} fill="url(#sparkFill)" />
+      <polyline points={points} fill="none" stroke="hsl(var(--primary))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
   const { assets, transactions, categories, getAssetValue, deleteAsset, deleteTransaction } = useStore();
   const { toast } = useToast();
@@ -30,8 +57,19 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
     if (!asset) return [];
     return transactions
       .filter((t) => t.assetId === asset.id)
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => a.date.localeCompare(b.date));
   }, [asset, transactions]);
+
+  const valueHistory = useMemo(() => {
+    if (!asset || assetTxs.length === 0) return [];
+    let running = 0;
+    return assetTxs.map((tx) => {
+      running += tx.type === 'add' ? tx.amount : -tx.amount;
+      return running;
+    });
+  }, [asset, assetTxs]);
+
+  const displayTxs = useMemo(() => [...assetTxs].reverse(), [assetTxs]);
 
   const monthChange = useMemo(() => {
     if (!asset) return 0;
@@ -81,6 +119,13 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
             )}
           </div>
 
+          {/* Mini Sparkline */}
+          {valueHistory.length >= 2 && (
+            <div className="px-2 py-1 rounded-xl bg-surface-secondary/30 border border-border/10">
+              <MiniSparkline data={valueHistory} />
+            </div>
+          )}
+
           {/* Quick Actions */}
           <div className="flex gap-2">
             <Button variant="accent" className="flex-1" onClick={() => { setTxType('add'); setShowTxForm(true); }}>
@@ -101,30 +146,24 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
           {/* Transaction History */}
           <div className="space-y-2">
             <h4 className="text-[10px] text-muted-foreground/45 uppercase tracking-wider font-bold">Riwayat Transaksi</h4>
-            {assetTxs.length === 0 ? (
+            {displayTxs.length === 0 ? (
               <div className="text-center py-6 space-y-2">
                 <FileText className="h-6 w-6 text-muted-foreground/30 mx-auto" />
                 <p className="text-[11px] text-muted-foreground/40">Belum ada transaksi</p>
               </div>
             ) : (
               <div className="space-y-0 max-h-56 overflow-y-auto rounded-2xl bg-surface-secondary/40 border border-border/15">
-                {assetTxs.map((tx) => (
+                {displayTxs.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between py-2.5 px-3 group border-b border-border/8 last:border-0">
                     <div className="flex items-center gap-2.5">
                       <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${
                         tx.type === 'add' ? 'bg-success-soft' : 'bg-destructive-soft'
                       }`}>
-                        {tx.type === 'add' ? (
-                          <ArrowUpRight className="h-3 w-3 text-success" />
-                        ) : (
-                          <ArrowDownRight className="h-3 w-3 text-destructive" />
-                        )}
+                        {tx.type === 'add' ? <ArrowUpRight className="h-3 w-3 text-success" /> : <ArrowDownRight className="h-3 w-3 text-destructive" />}
                       </div>
                       <div>
-                        <p className={`text-[11px] font-bold font-tabular ${
-                          tx.type === 'add' ? 'text-success' : 'text-destructive'
-                        }`}>
-                          {tx.type === 'add' ? '+' : '-'}{formatCompact(tx.amount)}
+                        <p className={`text-[11px] font-bold font-tabular ${tx.type === 'add' ? 'text-success' : 'text-destructive'}`}>
+                          {tx.type === 'add' ? '+' : '-'}{formatCurrency(tx.amount)}
                         </p>
                         <p className="text-[9px] text-muted-foreground/40">{tx.notes || formatDate(tx.date)}</p>
                       </div>
@@ -156,13 +195,7 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
         </div>
       </Modal>
 
-      <TransactionFormModal
-        open={showTxForm}
-        onClose={() => setShowTxForm(false)}
-        assetId={asset.id}
-        type={txType}
-      />
-
+      <TransactionFormModal open={showTxForm} onClose={() => setShowTxForm(false)} assetId={asset.id} type={txType} />
       <ConfirmDialog
         open={showConfirm}
         title="Hapus Aset?"
