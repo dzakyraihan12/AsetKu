@@ -94,12 +94,10 @@
 }
 
 @layer components {
-  /* Blue gradient button — from Figma DS */
   .btn-gradient {
     background: linear-gradient(98deg, #135581 2%, #24AAE1 100%) !important;
   }
 
-  /* Gold/Yellow gradient button — from Figma DS */
   .btn-gold {
     background: linear-gradient(135deg, #FDCC09 0%, #D4A406 100%) !important;
   }
@@ -147,7 +145,6 @@
     background: linear-gradient(135deg, #135581, #24AAE1);
   }
 
-  /* Hero section gradient */
   .hero-gradient {
     background: linear-gradient(145deg,
       #0d3553 0%,
@@ -223,11 +220,6 @@ html {
   .hero-gradient {
     margin-top: calc(-1 * env(safe-area-inset-top, 0px));
     padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
-  }
-
-  /* Ensure bottom nav sits above home indicator */
-  .nav-bottom-offset {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
