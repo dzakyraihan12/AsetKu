@@ -214,6 +214,11 @@
 html {
   scroll-behavior: smooth;
   overflow: hidden;
+  height: 100%;
+}
+
+body {
+  height: 100%;
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
