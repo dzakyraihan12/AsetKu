@@ -34,11 +34,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" suppressHydrationWarning className={jakarta.variable}>
+    <html lang="id" suppressHydrationWarning className={`${jakarta.variable} bg-background`}>
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="font-sans">
+      <body className="font-sans bg-background">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ToastProvider>
             <AppShell>{children}</AppShell>

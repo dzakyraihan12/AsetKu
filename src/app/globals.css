@@ -215,6 +215,11 @@ html {
   scroll-behavior: smooth;
   overflow: hidden;
   height: 100%;
+  background-color: hsl(216 20% 96%);
+}
+
+.dark html, html.dark {
+  background-color: hsl(220 25% 8%);
 }
 
 body {
