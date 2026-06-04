@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-[100dvh] overflow-hidden bg-background">
+      <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
         <DashboardSkeleton />
       </div>
     );
@@ -98,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden bg-background">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
       <main className="flex-1 overflow-y-auto no-scrollbar pb-20 relative">
         {/* Bottom fade indicator */}
         <div className="pointer-events-none fixed bottom-[70px] left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10" />
@@ -116,8 +116,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Bottom Navigation — Elevated Floating Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
-        <div className="mx-auto max-w-lg px-4 mb-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="mx-auto max-w-lg px-4 pb-2">
           <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;
