@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { haptic } from '@/lib/haptics';
 import { useStore } from '@/store';
+import { useViewport } from '@/hooks/useViewport';
 import { seedDefaultCategories, seedDemoData } from '@/db';
 import { DashboardPage } from '@/components/pages/DashboardPage';
 import { AssetsPage } from '@/components/pages/AssetsPage';
@@ -31,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { loadAll, isLoading } = useStore();
+  const { keyboardOpen } = useViewport();
 
   useEffect(() => {
     const storedName = localStorage.getItem('asetku_user_name');
@@ -81,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+      <div className="app-shell-root bg-background">
         <DashboardSkeleton />
       </div>
     );
@@ -98,10 +100,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background" style={{ height: '100dvh' }}>
-      <main className="flex-1 overflow-y-auto no-scrollbar relative" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
-        {/* Bottom fade indicator */}
-        <div className="pointer-events-none fixed left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10" style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }} />
+    <div className="app-shell-root bg-background">
+      {/* Main scrollable content */}
+      <main className="app-main-content no-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -109,15 +110,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
+            style={{
+              paddingBottom: keyboardOpen ? '16px' : 'calc(80px + var(--sab))',
+            }}
           >
             {renderPage()}
           </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
-        <div className="mx-auto max-w-lg px-4 pb-2" style={{ paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))' }}>
+      {/* Bottom Navigation - hides when keyboard is open */}
+      <nav className={cn('app-bottom-nav', keyboardOpen && 'keyboard-open')}>
+        <div className="mx-auto max-w-lg px-4 pb-2">
           <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;

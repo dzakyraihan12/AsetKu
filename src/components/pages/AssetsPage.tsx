@@ -56,7 +56,7 @@ export function AssetsPage() {
   return (
     <div className="max-w-lg mx-auto">
       {/* Header with gradient */}
-      <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-4 wealth-card">
+      <div className="hero-gradient rounded-b-[24px] px-4 pb-4 wealth-card">
         <div className="flex items-center justify-between relative z-10">
           <div>
             <div className="flex items-center gap-2">

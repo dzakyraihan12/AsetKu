@@ -7,6 +7,7 @@ export function SplashScreen() {
     <motion.div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
       style={{
+        height: 'var(--app-height, 100dvh)',
         background: 'linear-gradient(160deg, #061a2b 0%, #0a2d4a 25%, #135581 55%, #1d8fbf 80%, #24AAE1 100%)',
       }}
       exit={{ opacity: 0, scale: 1.02 }}
