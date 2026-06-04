@@ -18,7 +18,7 @@ export function ConfirmDialog({ open, title, message, onConfirm, onCancel, confi
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center px-6">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center px-6" style={{ height: 'var(--app-height, 100dvh)' }}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

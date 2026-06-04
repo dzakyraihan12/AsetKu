@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { haptic } from '@/lib/haptics';
 import { useStore } from '@/store';
+import { useViewport } from '@/hooks/useViewport';
 import { seedDefaultCategories, seedDemoData } from '@/db';
 import { DashboardPage } from '@/components/pages/DashboardPage';
 import { AssetsPage } from '@/components/pages/AssetsPage';
@@ -25,12 +26,25 @@ const tabs = [
   { id: 'settings', label: 'Lainnya', icon: Settings },
 ] as const;
 
+/**
+ * Bottom nav bar height calculation:
+ * - Nav pill height: 62px
+ * - Padding around pill: 12px top + safe-area-bottom (or min 8px)
+ * - Total reserve for main content padding-bottom
+ */
+const NAV_HEIGHT = 62;
+const NAV_PADDING_TOP = 8;
+const NAV_PADDING_BOTTOM_MIN = 8;
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showSplash, setShowSplash] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { loadAll, isLoading } = useStore();
+
+  // Initialize iOS viewport handler
+  useViewport();
 
   useEffect(() => {
     const storedName = localStorage.getItem('asetku_user_name');
@@ -81,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+      <div className="app-shell-root flex flex-col overflow-hidden bg-background">
         <DashboardSkeleton />
       </div>
     );
@@ -98,10 +112,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background" style={{ height: '100dvh' }}>
-      <main className="flex-1 overflow-y-auto no-scrollbar relative" style={{ paddingBottom: 'calc(90px + max(12px, env(safe-area-inset-bottom, 12px)))' }}>
-        {/* Bottom fade indicator */}
-        <div className="pointer-events-none fixed left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10" style={{ bottom: 'calc(74px + max(12px, env(safe-area-inset-bottom, 12px)))' }} />
+    <div className="app-shell-root flex flex-col overflow-hidden bg-background">
+      {/* Main scrollable content area */}
+      <main
+        className="flex-1 overflow-y-auto no-scrollbar relative"
+        style={{
+          paddingBottom: `calc(${NAV_HEIGHT + NAV_PADDING_TOP + NAV_PADDING_BOTTOM_MIN}px + var(--safe-bottom))`,
+        }}
+      >
+        {/* Bottom fade indicator above nav */}
+        <div
+          className="pointer-events-none fixed left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent z-10"
+          style={{
+            bottom: `calc(${NAV_HEIGHT + NAV_PADDING_TOP}px + var(--safe-bottom))`,
+          }}
+        />
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -115,10 +140,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
-        <div className="mx-auto max-w-lg px-4 pb-2" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}>
-          <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
+      {/* Bottom Navigation — Floating Pill */}
+      <nav
+        className="fixed left-0 right-0 z-50"
+        style={{
+          bottom: `calc(${NAV_PADDING_BOTTOM_MIN}px + var(--safe-bottom))`,
+        }}
+      >
+        <div className="mx-auto max-w-lg px-4">
+          <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface/95 backdrop-blur-xl border border-border/40 shadow-float">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;
               return (

@@ -35,6 +35,15 @@
     --input: 216 12% 91%;
     --ring: 201 75% 33%;
     --radius: 16px;
+
+    /* iOS Viewport Custom Properties */
+    --app-height: 100dvh;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --visual-viewport-height: 100dvh;
+    --keyboard-offset: 0px;
   }
 
   .dark {
@@ -105,11 +114,11 @@
 
 @layer utilities {
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: var(--safe-bottom);
   }
 
   .safe-top {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--safe-top);
   }
 
   .font-tabular {
@@ -211,11 +220,22 @@
   }
 }
 
+/* ==========================================
+   iOS PWA VIEWPORT SYSTEM (2025-2026)
+   ==========================================
+   Strategy:
+   1. Use CSS custom property --app-height updated by JS visualViewport API
+   2. Fallback to 100dvh (dynamic viewport height)
+   3. body is position:fixed to prevent iOS rubber-banding and address bar issues
+   4. All safe areas use CSS custom properties for consistency
+   ========================================== */
+
 html {
   scroll-behavior: smooth;
   overflow: hidden;
   height: 100%;
   height: 100dvh;
+  height: var(--app-height, 100dvh);
   background-color: hsl(216 20% 96%);
 }
 
@@ -226,11 +246,21 @@ html {
 body {
   height: 100%;
   height: 100dvh;
+  height: var(--app-height, 100dvh);
   overflow: hidden;
   position: fixed;
   width: 100%;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* iOS PWA Standalone Mode: ensure full screen coverage */
+@media all and (display-mode: standalone) {
+  html, body {
+    height: var(--app-height, 100dvh);
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -243,6 +273,25 @@ body {
 
 @supports (padding-top: env(safe-area-inset-top)) {
   .hero-gradient {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 1.25rem);
+    padding-top: calc(var(--safe-top) + 1.25rem);
   }
+}
+
+/* Prevent iOS from auto-zooming inputs */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* App Shell Root Container — fills the visual viewport */
+.app-shell-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--app-height, 100dvh);
+  width: 100%;
+  overflow: hidden;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -13,10 +13,40 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  // Handle iOS keyboard: scroll focused input into view
+  useEffect(() => {
+    if (!open) return;
+
+    function handleFocusIn(e: FocusEvent) {
+      const target = e.target as HTMLElement;
+      if (!target || !contentRef.current) return;
+
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+        // Give iOS time to show keyboard and resize viewport
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    }
+
+    const container = contentRef.current;
+    if (container) {
+      container.addEventListener('focusin', handleFocusIn);
+      return () => container.removeEventListener('focusin', handleFocusIn);
+    }
   }, [open]);
 
   const handleBackdrop = useCallback((e: React.MouseEvent) => {
@@ -26,7 +56,11 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={handleBackdrop}>
+        <div
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+          style={{ height: 'var(--app-height, 100dvh)' }}
+          onClick={handleBackdrop}
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -48,10 +82,13 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
               }
             }}
             className={cn(
-              'relative z-10 w-full max-w-lg max-h-[88dvh] overflow-hidden',
+              'relative z-10 w-full max-w-lg overflow-hidden',
               'bg-surface rounded-t-[24px] sm:rounded-[24px]',
               'shadow-float border border-border/20'
             )}
+            style={{
+              maxHeight: 'calc(var(--app-height, 100dvh) - 40px)',
+            }}
           >
             {/* Handle bar — drag indicator */}
             <div className="flex justify-center pt-3 sm:hidden cursor-grab active:cursor-grabbing">
@@ -69,8 +106,15 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
               </button>
             </div>
 
-            {/* Content */}
-            <div className="px-5 pb-8 overflow-y-auto max-h-[calc(88dvh-70px)]">
+            {/* Content — scrollable area that respects keyboard */}
+            <div
+              ref={contentRef}
+              className="px-5 pb-8 overflow-y-auto"
+              style={{
+                maxHeight: 'calc(var(--app-height, 100dvh) - 40px - 70px)',
+                paddingBottom: 'calc(2rem + var(--safe-bottom))',
+              }}
+            >
               {children}
             </div>
           </motion.div>

@@ -38,8 +38,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      {/* Toast container */}
-      <div className="fixed bottom-[82px] left-0 right-0 z-[200] flex flex-col items-center gap-2 pointer-events-none">
+      {/* Toast container — positioned above bottom nav */}
+      <div
+        className="fixed left-0 right-0 z-[200] flex flex-col items-center gap-2 pointer-events-none"
+        style={{
+          bottom: 'calc(78px + var(--safe-bottom))',
+        }}
+      >
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
