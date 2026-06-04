@@ -3,11 +3,10 @@
   "short_name": "AsetKu",
   "description": "Track and grow your personal wealth with elegance",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
   "background_color": "#0d3553",
   "theme_color": "#0d3553",
-  "orientation": "any",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -13,35 +13,10 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (open) {
-      // Prevent body scroll while modal is open
-      document.body.style.overflow = 'hidden';
-
-      // iOS: scroll focused input into view inside modal
-      const handleFocusIn = (e: FocusEvent) => {
-        const target = e.target as HTMLElement;
-        if (
-          contentRef.current?.contains(target) &&
-          (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
-        ) {
-          // Let iOS handle the scroll, then ensure the element is visible
-          setTimeout(() => {
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 350);
-        }
-      };
-
-      document.addEventListener('focusin', handleFocusIn);
-      return () => {
-        document.body.style.overflow = '';
-        document.removeEventListener('focusin', handleFocusIn);
-      };
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (open) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
   }, [open]);
 
   const handleBackdrop = useCallback((e: React.MouseEvent) => {
@@ -51,11 +26,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
   return (
     <AnimatePresence>
       {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
-          style={{ height: 'var(--app-height, 100dvh)' }}
-          onClick={handleBackdrop}
-        >
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={handleBackdrop}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -77,10 +48,9 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
               }
             }}
             className={cn(
-              'relative z-10 w-full max-w-lg overflow-hidden',
+              'relative z-10 w-full max-w-lg max-h-[88dvh] overflow-hidden',
               'bg-surface rounded-t-[24px] sm:rounded-[24px]',
-              'shadow-float border border-border/20',
-              'max-h-[calc(var(--app-height,100dvh)-2rem)]'
+              'shadow-float border border-border/20'
             )}
           >
             {/* Handle bar — drag indicator */}
@@ -100,14 +70,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
             </div>
 
             {/* Content */}
-            <div
-              ref={contentRef}
-              className="px-5 pb-8 overflow-y-auto"
-              style={{
-                maxHeight: 'calc(var(--app-height, 100dvh) - 2rem - 70px)',
-                paddingBottom: 'calc(2rem + var(--sab))',
-              }}
-            >
+            <div className="px-5 pb-8 overflow-y-auto max-h-[calc(88dvh-70px)]">
               {children}
             </div>
           </motion.div>

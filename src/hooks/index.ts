@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '@/store';
 
-export { useViewport } from './useViewport';
-
 export function useAssetValue(assetId: string) {
   const { transactions } = useStore();
   return useMemo(() => {

@@ -21,7 +21,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex items-center justify-center hero-gradient px-6"
-      style={{ height: 'var(--app-height, 100dvh)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

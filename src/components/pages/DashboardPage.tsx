@@ -86,7 +86,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
     <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-lg mx-auto pb-2">
       {/* Hero Wealth Header */}
       <motion.section variants={fadeUp}>
-        <div className="hero-gradient rounded-b-[24px] px-4 pb-5 wealth-card relative">
+        <div className="hero-gradient rounded-b-[24px] px-4 pt-5 pb-5 wealth-card relative">
           {/* Top Row: Greeting */}
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3">
