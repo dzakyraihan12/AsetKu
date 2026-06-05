@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { LayoutDashboard, Wallet, Target, BarChart3, Settings } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { haptic } from '@/lib/haptics';
 import { useStore } from '@/store';
@@ -25,21 +25,25 @@ const tabs = [
   { id: 'settings', label: 'Lainnya', icon: Settings },
 ] as const;
 
-const BACKGROUND_THRESHOLD_MS = 30_000; // 30 seconds
+const BACKGROUND_THRESHOLD_MS = 30_000;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showSplash, setShowSplash] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingExiting, setOnboardingExiting] = useState(false);
   const [isBlurred, setIsBlurred] = useState(false);
   const backgroundTimestamp = useRef<number>(0);
   const { loadAll, isLoading, transactions, goals, getTotalValue } = useStore();
 
   useEffect(() => {
     const storedName = localStorage.getItem('asetku_user_name');
+    const storedAvatar = localStorage.getItem('asetku_user_avatar');
     if (storedName) {
       setUserName(storedName);
+      setUserAvatar(storedAvatar);
     } else {
       setShowOnboarding(true);
     }
@@ -58,7 +62,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const handleOnboardingComplete = (name: string) => {
     localStorage.setItem('asetku_user_name', name);
     setUserName(name);
-    setShowOnboarding(false);
+    // Smooth exit animation
+    setOnboardingExiting(true);
+    setTimeout(() => {
+      setShowOnboarding(false);
+      setOnboardingExiting(false);
+    }, 500);
+  };
+
+  const handleProfileUpdate = (avatar: string, name: string) => {
+    localStorage.setItem('asetku_user_avatar', avatar);
+    localStorage.setItem('asetku_user_name', name);
+    setUserAvatar(avatar);
+    setUserName(name);
   };
 
   useEffect(() => {
@@ -68,6 +84,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('navigate-tab', handler);
     return () => window.removeEventListener('navigate-tab', handler);
+  }, []);
+
+  // Listen for profile updates from settings page
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { avatar, name } = (e as CustomEvent).detail;
+      handleProfileUpdate(avatar, name);
+    };
+    window.addEventListener('profile-update', handler);
+    return () => window.removeEventListener('profile-update', handler);
   }, []);
 
   // Privacy blur & splash on return from background
@@ -84,7 +110,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (blurOverlay) blurOverlay.style.display = 'none';
       setIsBlurred(false);
 
-      // Only show splash if background duration > threshold
       const elapsed = Date.now() - backgroundTimestamp.current;
       if (backgroundTimestamp.current > 0 && elapsed > BACKGROUND_THRESHOLD_MS) {
         setShowSplash(true);
@@ -138,7 +163,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   if (showOnboarding) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
+    return (
+      <AnimatePresence>
+        {!onboardingExiting && (
+          <motion.div
+            key="onboarding-wrapper"
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Onboarding onComplete={handleOnboardingComplete} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
   }
 
   if (isLoading) {
@@ -151,7 +188,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const renderPage = () => {
     switch (activeTab) {
-      case 'overview': return <DashboardPage userName={userName} />;
+      case 'overview': return <DashboardPage userName={userName} userAvatar={userAvatar} />;
       case 'assets': return <AssetsPage />;
       case 'goals': return <GoalsPage />;
       case 'analytics': return <StatisticsPage />;
@@ -173,10 +210,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {renderPage()}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation — Glassmorphism */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom" style={{ bottom: '-4px' }}>
         <div className="mx-auto max-w-lg px-4 pb-1">
-          <div className="relative flex items-center justify-around h-[62px] rounded-[22px] bg-surface border border-border/50 shadow-float">
+          <div className="relative flex items-center justify-around h-[62px] rounded-[22px] glass-nav shadow-glass">
             {tabs.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id;
               const hasBadge = getBadge(id);
@@ -189,7 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {isActive && (
                     <motion.div
                       layoutId="tab-bg"
-                      className="absolute inset-x-[4px] inset-y-[6px] rounded-[14px] bg-primary/[0.08]"
+                      className="absolute inset-x-[4px] inset-y-[6px] rounded-[14px] bg-primary/[0.12] backdrop-blur-sm"
                       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                     />
                   )}
@@ -197,17 +234,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Icon
                       className={cn(
                         'relative z-10 h-[20px] w-[20px] transition-colors duration-200',
-                        isActive ? 'text-primary' : 'text-muted-foreground/35'
+                        isActive ? 'text-primary' : 'text-muted-foreground/40'
                       )}
                       strokeWidth={isActive ? 2.2 : 1.5}
                     />
                     {hasBadge && (
-                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-400 border border-surface" />
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-400 border-2 border-white/50 dark:border-black/30" />
                     )}
                   </div>
                   <span className={cn(
                     'relative z-10 text-[9px] mt-[3px] transition-colors duration-200',
-                    isActive ? 'font-bold text-primary' : 'font-medium text-muted-foreground/35'
+                    isActive ? 'font-bold text-primary' : 'font-medium text-muted-foreground/40'
                   )}>
                     {label}
                   </span>
@@ -218,7 +255,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
 
-      {/* Privacy blur overlay — always in DOM, toggled via display for instant iOS response */}
+      {/* Privacy blur overlay */}
       <div
         id="privacy-blur-overlay"
         className="fixed inset-0 z-[9998] backdrop-blur-3xl bg-background/90"

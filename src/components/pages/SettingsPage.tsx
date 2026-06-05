@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Moon, Sun, Monitor, Download, Upload, Plus, Edit2, Trash2, Shield, Settings } from 'lucide-react';
+import { Moon, Sun, Monitor, Download, Upload, Plus, Edit2, Trash2, Shield, Settings, AlertTriangle, RotateCcw, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { useStore } from '@/store';
 import { db } from '@/db';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { GroupFormModal } from '@/components/shared/GroupFormModal';
+import { AvatarPicker, getAvatarEmoji } from '@/components/shared/AvatarPicker';
 import { PageLayout } from '@/components/layout/PageLayout';
 
 const fadeUp = {
@@ -25,6 +27,12 @@ export function SettingsPage() {
   const [editCatName, setEditCatName] = useState('');
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [editGroupId, setEditGroupId] = useState<string | null>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showResetFinal, setShowResetFinal] = useState(false);
+
+  const userName = typeof window !== 'undefined' ? localStorage.getItem('asetku_user_name') || '' : '';
+  const userAvatar = typeof window !== 'undefined' ? localStorage.getItem('asetku_user_avatar') || '' : '';
 
   const handleAddCategory = async () => {
     if (!catName.trim()) return;
@@ -36,6 +44,13 @@ export function SettingsPage() {
     if (!editCatId || !editCatName.trim()) return;
     await updateCategory(editCatId, editCatName.trim());
     setEditCatId(null);
+  };
+
+  const handleProfileSave = (avatar: string, name: string) => {
+    localStorage.setItem('asetku_user_avatar', avatar);
+    localStorage.setItem('asetku_user_name', name);
+    window.dispatchEvent(new CustomEvent('profile-update', { detail: { avatar, name } }));
+    toast('Profil berhasil diperbarui');
   };
 
   const handleExport = async () => {
@@ -85,6 +100,22 @@ export function SettingsPage() {
     input.click();
   };
 
+  const handleReset = async () => {
+    await db.assets.clear();
+    await db.categories.clear();
+    await db.transactions.clear();
+    await db.customGroups.clear();
+    await db.goals.clear();
+    localStorage.removeItem('asetku_user_name');
+    localStorage.removeItem('asetku_user_avatar');
+    localStorage.removeItem('asetku_primary_goal');
+    localStorage.removeItem('asetku_hide_balance');
+    await loadAll();
+    setShowResetFinal(false);
+    toast('Semua data berhasil dihapus', 'info');
+    setTimeout(() => window.location.reload(), 800);
+  };
+
   const headerContent = (
     <div>
       <div className="flex items-center gap-2">
@@ -103,9 +134,26 @@ export function SettingsPage() {
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.03 } } }}
     >
+      {/* Profile */}
+      <motion.section variants={fadeUp} className="px-3 pt-3 pb-3">
+        <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Profil</span>
+        <button
+          onClick={() => setShowAvatarPicker(true)}
+          className="mt-1.5 w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border/20 shadow-card press-scale"
+        >
+          <div className="h-11 w-11 rounded-full bg-primary/8 flex items-center justify-center border border-primary/15">
+            <span className="text-[24px]">{getAvatarEmoji(userAvatar || null)}</span>
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-[13px] font-bold">{userName || 'User'}</p>
+            <p className="text-[10px] text-muted-foreground/40">Tap untuk edit profil</p>
+          </div>
+          <User className="h-4 w-4 text-muted-foreground/30" />
+        </button>
+      </motion.section>
 
       {/* Theme */}
-      <motion.section variants={fadeUp} className="px-3 pt-3 pb-3">
+      <motion.section variants={fadeUp} className="px-3 pb-3">
         <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Tampilan</span>
         <div className="mt-1.5 flex p-1 bg-surface-secondary rounded-full border border-border/30">
           {[
@@ -206,16 +254,48 @@ export function SettingsPage() {
         </div>
       </motion.section>
 
-      {/* Backup */}
+      {/* Backup — improved with descriptions */}
       <motion.section variants={fadeUp} className="px-3 pb-3">
-        <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Backup</span>
-        <div className="flex gap-1.5 mt-1.5">
-          <Button variant="secondary" className="flex-1 !h-9" onClick={handleExport}>
-            <Download className="h-3.5 w-3.5" /> Export
-          </Button>
-          <Button variant="secondary" className="flex-1 !h-9" onClick={handleImport}>
-            <Upload className="h-3.5 w-3.5" /> Import
-          </Button>
+        <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Backup & Data</span>
+        <div className="mt-1.5 bg-surface border border-border/20 rounded-2xl p-3 shadow-card space-y-2.5">
+          <button onClick={handleExport} className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10 press-scale text-left">
+            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Download className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-caption font-semibold">Export Data</p>
+              <p className="text-micro text-muted-foreground/40">Simpan backup ke file JSON</p>
+            </div>
+          </button>
+          <button onClick={handleImport} className="w-full flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/10 press-scale text-left">
+            <div className="h-9 w-9 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+              <Upload className="h-4 w-4 text-success" />
+            </div>
+            <div className="flex-1">
+              <p className="text-caption font-semibold">Import Data</p>
+              <p className="text-micro text-muted-foreground/40">Pulihkan dari file backup</p>
+            </div>
+          </button>
+        </div>
+      </motion.section>
+
+      {/* Reset */}
+      <motion.section variants={fadeUp} className="px-3 pb-3">
+        <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Zona Bahaya</span>
+        <div className="mt-1.5">
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="w-full flex items-center gap-3 p-3 rounded-2xl bg-destructive/5 border border-destructive/10 press-scale text-left"
+          >
+            <div className="h-9 w-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+              <RotateCcw className="h-4 w-4 text-destructive" />
+            </div>
+            <div className="flex-1">
+              <p className="text-caption font-semibold text-destructive">Reset Aplikasi</p>
+              <p className="text-micro text-muted-foreground/40">Hapus semua data dan mulai dari awal</p>
+            </div>
+            <AlertTriangle className="h-4 w-4 text-destructive/40" />
+          </button>
         </div>
       </motion.section>
 
@@ -239,7 +319,30 @@ export function SettingsPage() {
         <p className="text-[9px] text-muted-foreground/15 mt-0.5">v1.0 · 2024</p>
       </div>
 
+      {/* Modals */}
       <GroupFormModal open={showGroupForm} onClose={() => setShowGroupForm(false)} editId={editGroupId} />
+      <AvatarPicker
+        open={showAvatarPicker}
+        onClose={() => setShowAvatarPicker(false)}
+        currentAvatar={userAvatar || null}
+        currentName={userName}
+        onSave={handleProfileSave}
+      />
+      {/* Reset — double confirm */}
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Reset Aplikasi?"
+        message="Kamu yakin? Semua aset, transaksi, target, dan pengaturan akan dihapus permanen. Aksi ini tidak bisa dibatalkan."
+        onConfirm={() => { setShowResetConfirm(false); setShowResetFinal(true); }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
+      <ConfirmDialog
+        open={showResetFinal}
+        title="⚠️ Konfirmasi Final"
+        message="BENAR-BENAR yakin? Ketuk 'Hapus' untuk menghapus SEMUA data secara permanen."
+        onConfirm={handleReset}
+        onCancel={() => setShowResetFinal(false)}
+      />
     </motion.div>
     </PageLayout>
   );

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCompact, calculateProgress, cn } from '@/lib/utils';
@@ -26,8 +26,40 @@ export function GoalsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const totalValue = getTotalValue();
+
+  // Close dropdown on tap outside (#8)
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleTap = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(null);
+      }
+    };
+    document.addEventListener('mousedown', handleTap);
+    document.addEventListener('touchstart', handleTap);
+    return () => {
+      document.removeEventListener('mousedown', handleTap);
+      document.removeEventListener('touchstart', handleTap);
+    };
+  }, [menuOpen]);
+
+  // Get primary goal for header progress ring
+  const primaryGoal = (() => {
+    if (goals.length === 0) return null;
+    if (typeof window !== 'undefined') {
+      const storedId = localStorage.getItem('asetku_primary_goal');
+      if (storedId) {
+        const found = goals.find(g => g.id === storedId);
+        if (found) return found;
+      }
+    }
+    return goals[0];
+  })();
+
+  const primaryProgress = primaryGoal ? calculateProgress(totalValue, primaryGoal.targetAmount) : 0;
 
   const getGoalCurrent = (goal: typeof goals[0]) => {
     if (goal.customGroupId) return getGroupTotal(goal.customGroupId);
@@ -65,18 +97,24 @@ export function GoalsPage() {
         </Button>
       </div>
 
-      {/* Summary */}
+      {/* Summary with progress ring (#11) */}
       {goals.length > 0 && (
-        <div className="mt-4 flex gap-3">
-          <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-            <p className="text-[9px] text-white/30 uppercase font-bold tracking-wider">Sekarang</p>
-            <p className="text-[17px] font-extrabold text-white number-display mt-1">{formatCompact(totalValue)}</p>
+        <div className="mt-4 flex gap-3 items-center">
+          {/* Progress Ring — white label for header */}
+          <div className="shrink-0 [&_span]:!text-white">
+            <CircularProgress value={primaryProgress} size={56} strokeWidth={5} color="#FDCC09" />
           </div>
-          <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
-            <p className="text-[9px] text-amber-300/50 uppercase font-bold tracking-wider">Target</p>
-            <p className="text-[17px] font-extrabold text-amber-300 number-display mt-1">
-              {formatCompact(Math.max(...goals.map(g => g.targetAmount)))}
-            </p>
+          <div className="flex-1 flex gap-2">
+            <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+              <p className="text-[9px] text-white/30 uppercase font-bold tracking-wider">Sekarang</p>
+              <p className="text-[15px] font-extrabold text-white number-display mt-1">{formatCompact(totalValue)}</p>
+            </div>
+            <div className="flex-1 bg-white/[0.07] backdrop-blur-md rounded-2xl p-3 border border-white/[0.06]">
+              <p className="text-[9px] text-amber-300/50 uppercase font-bold tracking-wider">Target</p>
+              <p className="text-[15px] font-extrabold text-amber-300 number-display mt-1">
+                {primaryGoal ? formatCompact(primaryGoal.targetAmount) : '—'}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -175,7 +213,7 @@ export function GoalsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="relative">
+                      <div className="relative" ref={menuOpen === goal.id ? menuRef : undefined}>
                         <button
                           onClick={() => setMenuOpen(menuOpen === goal.id ? null : goal.id)}
                           className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors"
@@ -183,7 +221,17 @@ export function GoalsPage() {
                           <MoreHorizontal className="h-4 w-4 text-muted-foreground/25" />
                         </button>
                         {menuOpen === goal.id && (
-                          <div className="absolute right-0 top-8 bg-surface border border-border/20 rounded-2xl shadow-elevated py-1.5 z-10 min-w-[110px] animate-scale-in">
+                          <div className="absolute right-0 top-8 bg-surface border border-border/20 rounded-2xl shadow-elevated py-1.5 z-10 min-w-[130px] animate-scale-in">
+                            <button
+                              onClick={() => {
+                                setMenuOpen(null);
+                                localStorage.setItem('asetku_primary_goal', goal.id);
+                                toast('Target utama berhasil diubah');
+                              }}
+                              className="flex items-center gap-2 w-full px-3.5 py-2 text-[11px] hover:bg-surface-secondary text-amber-600 dark:text-amber-400"
+                            >
+                              <Star className="h-3 w-3" /> Set Utama
+                            </button>
                             <button
                               onClick={() => { setMenuOpen(null); setEditId(goal.id); setShowForm(true); }}
                               className="flex items-center gap-2 w-full px-3.5 py-2 text-[11px] hover:bg-surface-secondary"
@@ -241,7 +289,6 @@ export function GoalsPage() {
                             )}
                           </motion.div>
                         </div>
-                        {/* Milestone markers */}
                         {!isComplete && (
                           <div className="absolute inset-0 flex items-center pointer-events-none">
                             {[25, 50, 75].map((milestone) => (

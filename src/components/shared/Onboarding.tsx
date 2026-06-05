@@ -91,19 +91,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 ))}
               </div>
 
-              <button
-                onClick={handleNext}
-                className="w-full h-12 rounded-full bg-white/10 border border-white/20 text-white font-bold text-[13px] backdrop-blur-md active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
-              >
-                Lanjut <ChevronRight className="h-4 w-4" />
-              </button>
+              <div className="space-y-3 pt-2">
+                <button
+                  onClick={handleNext}
+                  className="w-full h-12 rounded-full bg-white/10 border border-white/20 text-white font-bold text-[13px] backdrop-blur-md active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
+                >
+                  Lanjut <ChevronRight className="h-4 w-4" />
+                </button>
 
-              <button
-                onClick={() => setStep(slides.length)}
-                className="text-[11px] text-white/30 font-medium"
-              >
-                Lewati
-              </button>
+                <button
+                  onClick={() => setStep(slides.length)}
+                  className="w-full py-2 text-[11px] text-white/40 font-medium active:text-white/60 transition-colors"
+                >
+                  Lewati →
+                </button>
+              </div>
             </motion.div>
           ) : (
             <motion.div

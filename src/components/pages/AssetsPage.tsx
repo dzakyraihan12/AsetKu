@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, ChevronRight, TrendingUp, TrendingDown, Wallet, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package } from 'lucide-react';
+import { Plus, Search, X, TrendingUp, TrendingDown, Wallet, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
@@ -27,7 +27,7 @@ const fadeUp = {
 };
 
 export function AssetsPage() {
-  const { assets, categories, transactions, getAssetValue, getTotalValue, deleteAsset } = useStore();
+  const { assets, categories, transactions, getAssetValue, getTotalValue, deleteAsset, isLoading } = useStore();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
@@ -36,6 +36,7 @@ export function AssetsPage() {
   const [detailAsset, setDetailAsset] = useState<string | null>(null);
   const [showTxForm, setShowTxForm] = useState(false);
   const [txAssetId, setTxAssetId] = useState<string>('');
+  const [txType, setTxType] = useState<'add' | 'subtract'>('add');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const totalValue = useMemo(() => getTotalValue(), [assets, transactions]);
@@ -86,7 +87,7 @@ export function AssetsPage() {
           <Plus className="h-3.5 w-3.5" /> Tambah
         </Button>
       </div>
-      {/* Search inside hero */}
+      {/* Search with clear button */}
       <div className="mt-3.5">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none z-10" />
@@ -94,8 +95,16 @@ export function AssetsPage() {
             placeholder="Cari aset..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 rounded-2xl bg-white/[0.08] pl-10 pr-4 text-[12px] text-white placeholder:text-white/30 border border-white/[0.08] focus:outline-none focus:border-white/20 focus:bg-white/[0.12] transition-all backdrop-blur-md"
+            className="w-full h-10 rounded-2xl bg-white/[0.08] pl-10 pr-10 text-[12px] text-white placeholder:text-white/30 border border-white/[0.08] focus:outline-none focus:border-white/20 focus:bg-white/[0.12] transition-all backdrop-blur-md"
           />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white/20 flex items-center justify-center z-10 press-scale"
+            >
+              <X className="h-3 w-3 text-white/80" />
+            </button>
+          )}
         </div>
       </div>
     </>
@@ -130,7 +139,7 @@ export function AssetsPage() {
         </div>
       </div>
 
-      {/* Swipe hint - shown only when there are assets */}
+      {/* Swipe hint */}
       {filteredAssets.length > 0 && (
         <div className="px-3 pb-1">
           <p className="text-[9px] text-muted-foreground/30 text-center">← Geser item ke kiri untuk aksi cepat</p>
@@ -156,13 +165,13 @@ export function AssetsPage() {
               <SwipeableAssetItem
                 onEdit={() => { setEditingAsset(asset.id); setShowForm(true); }}
                 onDelete={() => setConfirmDeleteId(asset.id)}
-                onAddTransaction={() => { setTxAssetId(asset.id); setShowTxForm(true); }}
+                onAddTransaction={() => { setTxAssetId(asset.id); setTxType('add'); setShowTxForm(true); }}
+                onSubtractTransaction={() => { setTxAssetId(asset.id); setTxType('subtract'); setShowTxForm(true); }}
               >
                 <button
                   className="w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border/15 text-left transition-all shadow-subtle overflow-hidden relative"
                   onClick={() => setDetailAsset(asset.id)}
                 >
-                  {/* Left category color bar */}
                   <div
                     className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-full"
                     style={{ backgroundColor: ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'][categories.findIndex(c => c.id === asset.categoryId) % 7] }}
@@ -195,7 +204,8 @@ export function AssetsPage() {
           );
         })}
 
-        {filteredAssets.length === 0 && (
+        {/* Empty state with loading guard and proper icons (#6, #9) */}
+        {filteredAssets.length === 0 && !isLoading && (
           <div className="text-center py-16 space-y-4 px-4">
             <div className="w-14 h-14 rounded-2xl bg-surface-secondary flex items-center justify-center mx-auto">
               <Wallet className="h-6 w-6 text-muted-foreground/40" />
@@ -209,7 +219,7 @@ export function AssetsPage() {
             <div className="text-left max-w-[240px] mx-auto space-y-2 py-2">
               <div className="flex items-center gap-2.5">
                 <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-                  <Wallet className="h-3 w-3 text-primary" />
+                  <Landmark className="h-3 w-3 text-primary" />
                 </div>
                 <span className="text-[11px] text-muted-foreground/60">Rekening bank, deposito, cash</span>
               </div>
@@ -221,7 +231,7 @@ export function AssetsPage() {
               </div>
               <div className="flex items-center gap-2.5">
                 <div className="h-6 w-6 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-                  <ChevronRight className="h-3 w-3 text-primary" />
+                  <Home className="h-3 w-3 text-primary" />
                 </div>
                 <span className="text-[11px] text-muted-foreground/60">Properti, kendaraan, emas & lainnya</span>
               </div>
@@ -244,7 +254,7 @@ export function AssetsPage() {
           open={showTxForm}
           onClose={() => { setShowTxForm(false); setTxAssetId(''); }}
           assetId={txAssetId}
-          type="add"
+          type={txType}
         />
       )}
       <ConfirmDialog

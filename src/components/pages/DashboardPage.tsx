@@ -1,16 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, ChevronRight, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package, Trophy, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store';
-import { formatCurrency, formatCompact, calculateProgress } from '@/lib/utils';
+import { formatCurrency, formatCompact, calculateProgress, formatRelativeDate } from '@/lib/utils';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useNavigate } from '@/hooks/useNavigation';
 import { ProgressBar } from '@/components/ui/Progress';
 import { GrowthChart } from '@/components/shared/GrowthChart';
 import { PageLayout } from '@/components/layout/PageLayout';
-
+import { getAvatarEmoji } from '@/components/shared/AvatarPicker';
+import { AssetFormModal } from '@/components/shared/AssetFormModal';
+import { GoalFormModal } from '@/components/shared/GoalFormModal';
+import { TransactionFormModal } from '@/components/shared/TransactionFormModal';
 import type { LucideIcon } from 'lucide-react';
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -25,8 +28,8 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
-export function DashboardPage({ userName }: { userName: string | null }) {
-  const { assets, transactions, customGroups, goals, categories, getAssetValue, getTotalValue, getGroupTotal, getCategoryTotal } = useStore();
+export function DashboardPage({ userName, userAvatar }: { userName: string | null; userAvatar: string | null }) {
+  const { assets, transactions, customGroups, goals, categories, getAssetValue, getTotalValue, getGroupTotal, getCategoryTotal, isLoading } = useStore();
   const navigate = useNavigate();
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -34,6 +37,13 @@ export function DashboardPage({ userName }: { userName: string | null }) {
     }
     return false;
   });
+  const [showAssetForm, setShowAssetForm] = useState(false);
+  const [showGoalForm, setShowGoalForm] = useState(false);
+  const [showTxPicker, setShowTxPicker] = useState(false);
+  const [showTxTypePicker, setShowTxTypePicker] = useState(false);
+  const [txAssetId, setTxAssetId] = useState<string>('');
+  const [txType, setTxType] = useState<'add' | 'subtract'>('add');
+  const [showTxForm, setShowTxForm] = useState(false);
 
   const toggleHideBalance = () => {
     const next = !hideBalance;
@@ -43,7 +53,19 @@ export function DashboardPage({ userName }: { userName: string | null }) {
 
   const totalValue = useMemo(() => getTotalValue(), [assets, transactions]);
   const animatedTotal = useCountUp(totalValue, 900);
-  const primaryGoal = goals[0];
+
+  // Primary goal from localStorage preference
+  const primaryGoal = useMemo(() => {
+    if (goals.length === 0) return null;
+    if (typeof window !== 'undefined') {
+      const storedId = localStorage.getItem('asetku_primary_goal');
+      if (storedId) {
+        const found = goals.find(g => g.id === storedId);
+        if (found) return found;
+      }
+    }
+    return goals[0];
+  }, [goals]);
 
   const monthChange = useMemo(() => {
     const now = new Date();
@@ -87,38 +109,27 @@ export function DashboardPage({ userName }: { userName: string | null }) {
 
   const headerContent = (
     <>
-      {/* Top Row: Greeting */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-md shadow-lg shadow-black/10">
-            <span className="text-[12px] font-bold text-white">{userName ? userName.slice(0, 2).toUpperCase() : 'U'}</span>
-          </div>
+          <button onClick={() => navigate('settings')} className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-md shadow-lg shadow-black/10 press-scale">
+            <span className="text-[16px]">{getAvatarEmoji(userAvatar)}</span>
+          </button>
           <div>
             <p className="text-[11px] text-white/50 font-medium flex items-center gap-1"><greeting.icon className="h-3 w-3 text-white/60" /> Selamat {greeting.text}</p>
             <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
           </div>
         </div>
-        <div
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
-            monthChange >= 0
-              ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25'
-              : 'bg-red-400/20 text-red-200 border border-red-400/25'
-          }`}
-        >
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${monthChange >= 0 ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25' : 'bg-red-400/20 text-red-200 border border-red-400/25'}`}>
           {monthChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
           {monthChange >= 0 ? '+' : ''}{monthPct}%
         </div>
       </div>
 
-      {/* Wealth Display */}
       <div className="mt-5">
         <div className="flex items-center gap-2">
           <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Kekayaan</p>
           <button onClick={toggleHideBalance} className="p-1 rounded-full hover:bg-white/10 transition-colors">
-            {hideBalance
-              ? <EyeOff className="h-3.5 w-3.5 text-white/40" />
-              : <Eye className="h-3.5 w-3.5 text-white/40" />
-            }
+            {hideBalance ? <EyeOff className="h-3.5 w-3.5 text-white/40" /> : <Eye className="h-3.5 w-3.5 text-white/40" />}
           </button>
         </div>
         <p className="text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none">
@@ -132,7 +143,6 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         </div>
       </div>
 
-      {/* Quick Stats Pills - compact */}
       <div className="mt-3 flex gap-1.5">
         <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-xl px-2.5 py-2 border border-white/[0.08]">
           <p className="text-[8px] text-white/30 font-bold uppercase">Aset</p>
@@ -159,24 +169,31 @@ export function DashboardPage({ userName }: { userName: string | null }) {
       {/* Quick Actions */}
       <motion.section variants={fadeUp} className="px-4 mt-3">
         <div className="flex gap-2">
-          {[
-            { icon: PlusCircle, label: 'Tambah Aset', tab: 'assets' as const },
-            { icon: Receipt, label: 'Transaksi', tab: 'assets' as const },
-            { icon: Crosshair, label: 'Buat Target', tab: 'goals' as const },
-          ].map((action) => (
-            <button
-              key={action.label}
-              onClick={() => navigate(action.tab)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl btn-gradient text-white press-scale shadow-sm shadow-sky-900/15 hover:brightness-110 transition-all"
-            >
-              <action.icon className="h-3.5 w-3.5 text-white/90" />
-              <span className="text-[10px] font-bold text-white/90">{action.label}</span>
-            </button>
-          ))}
+          <button
+            onClick={() => setShowAssetForm(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl btn-gradient text-white press-scale shadow-sm shadow-sky-900/15 hover:brightness-110 transition-all"
+          >
+            <PlusCircle className="h-3.5 w-3.5 text-white/90" />
+            <span className="text-[10px] font-bold text-white/90">Tambah Aset</span>
+          </button>
+          <button
+            onClick={() => setShowTxPicker(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl btn-gradient text-white press-scale shadow-sm shadow-sky-900/15 hover:brightness-110 transition-all"
+          >
+            <Receipt className="h-3.5 w-3.5 text-white/90" />
+            <span className="text-[10px] font-bold text-white/90">Transaksi</span>
+          </button>
+          <button
+            onClick={() => setShowGoalForm(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl btn-gradient text-white press-scale shadow-sm shadow-sky-900/15 hover:brightness-110 transition-all"
+          >
+            <Crosshair className="h-3.5 w-3.5 text-white/90" />
+            <span className="text-[10px] font-bold text-white/90">Buat Target</span>
+          </button>
         </div>
       </motion.section>
 
-      {/* Goal Progress - moved to body for compact header */}
+      {/* Goal Progress - primary goal */}
       {primaryGoal && (
         <motion.section variants={fadeUp} className="px-3 mt-3">
           <div className="card-elevated p-3">
@@ -184,6 +201,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
               <div className="flex items-center gap-2">
                 <Target className="h-3.5 w-3.5 text-primary/60" />
                 <span className="text-[11px] font-semibold">{primaryGoal.name}</span>
+                <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">Utama</span>
               </div>
               <span className="text-[12px] font-extrabold number-display text-primary">{progress}%</span>
             </div>
@@ -203,9 +221,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
             <TrendingUp className="h-3.5 w-3.5 text-primary/60" />
             <span className="text-[12px] font-bold text-foreground">Pertumbuhan</span>
           </div>
-          <span className="chip-accent">
-            <TrendingUp className="h-2.5 w-2.5" /> 6 bulan
-          </span>
+          <span className="chip-accent"><TrendingUp className="h-2.5 w-2.5" /> 6 bulan</span>
         </div>
         <div className="card-elevated p-3 pb-1">
           <GrowthChart />
@@ -219,38 +235,23 @@ export function DashboardPage({ userName }: { userName: string | null }) {
             <PieChart className="h-3.5 w-3.5 text-primary/60" />
             <span className="text-[12px] font-bold text-foreground">Alokasi Aset</span>
           </div>
-          {/* Allocation Bar */}
           <div className="px-3 mb-2.5">
             <div className="h-2.5 rounded-full overflow-hidden flex gap-[1.5px] bg-surface-secondary/80">
               {categoryAllocation.map((cat, i) => {
                 const pct = (cat.value / totalValue) * 100;
                 const colors = ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'];
                 return (
-                  <motion.div
-                    key={cat.id}
-                    className="h-full first:rounded-l-full last:rounded-r-full"
-                    style={{ backgroundColor: colors[i % colors.length] }}
-                    initial={{ flex: 0 }}
-                    animate={{ flex: pct }}
-                    transition={{ duration: 0.7, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }}
-                  />
+                  <motion.div key={cat.id} className="h-full first:rounded-l-full last:rounded-r-full" style={{ backgroundColor: colors[i % colors.length] }} initial={{ flex: 0 }} animate={{ flex: pct }} transition={{ duration: 0.7, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }} />
                 );
               })}
             </div>
           </div>
-          {/* Category Chips - horizontal scroll */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-3">
             {categoryAllocation.map((cat, i) => {
               const pct = Math.round((cat.value / totalValue) * 100);
               const colors = ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'];
               return (
-                <motion.div
-                  key={cat.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 + i * 0.04 }}
-                  className="shrink-0 min-w-[100px] p-3 rounded-2xl bg-surface border border-border/20 shadow-card"
-                >
+                <motion.div key={cat.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + i * 0.04 }} className="shrink-0 min-w-[100px] p-3 rounded-2xl bg-surface border border-border/20 shadow-card">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <div className="h-3 w-3 rounded-full shadow-sm" style={{ backgroundColor: colors[i % colors.length] }} />
                     <p className="text-[10px] text-muted-foreground/60 truncate font-semibold">{cat.name}</p>
@@ -272,7 +273,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
               <Trophy className="h-3.5 w-3.5 text-amber-500/70" />
               <span className="text-[12px] font-bold text-foreground">Top Aset</span>
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
+            <button onClick={() => navigate('assets')} className="text-[10px] font-bold text-primary press-scale">Lihat semua</button>
           </div>
           <div className="card-elevated overflow-hidden divide-y divide-border/8">
             {topAssets.map((asset, idx) => {
@@ -280,13 +281,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
               const IconComp = CATEGORY_ICONS[catName] || Package;
               const pct = totalValue > 0 ? Math.round((asset.value / totalValue) * 100) : 0;
               return (
-                <motion.div
-                  key={asset.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 + idx * 0.04 }}
-                  className="flex items-center justify-between py-3 px-3.5"
-                >
+                <motion.div key={asset.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + idx * 0.04 }} className="flex items-center justify-between py-3 px-3.5">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-surface-secondary flex items-center justify-center border border-border/15">
                       <IconComp className="h-4 w-4 text-muted-foreground/60" />
@@ -326,12 +321,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
                   <p className="text-[14px] font-extrabold number-display mt-1">{formatCompact(val)}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex-1 h-1 rounded-full bg-surface-secondary overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full gradient-bg"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                      />
+                      <motion.div className="h-full rounded-full gradient-bg" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} />
                     </div>
                     <span className="text-[9px] text-muted-foreground/30 font-bold number-display">{pct}%</span>
                   </div>
@@ -342,7 +332,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         </motion.section>
       )}
 
-      {/* Recent Activity */}
+      {/* Recent Activity — shows both date and notes */}
       {recentTxs.length > 0 && (
         <motion.section variants={fadeUp} className="px-3 mt-4 pb-3">
           <div className="flex items-center justify-between mb-2">
@@ -350,9 +340,7 @@ export function DashboardPage({ userName }: { userName: string | null }) {
               <Activity className="h-3.5 w-3.5 text-primary/60" />
               <span className="text-[12px] font-bold text-foreground">Aktivitas Terbaru</span>
             </div>
-            <button onClick={() => navigate('assets')} className="text-[10px] font-bold text-primary press-scale">
-              Lihat semua
-            </button>
+            <button onClick={() => navigate('assets')} className="text-[10px] font-bold text-primary press-scale">Lihat semua</button>
           </div>
           <div className="card-elevated overflow-hidden divide-y divide-border/6">
             {recentTxs.map((tx) => {
@@ -361,14 +349,20 @@ export function DashboardPage({ userName }: { userName: string | null }) {
               return (
                 <div key={tx.id} className="flex items-center justify-between py-2.5 px-3.5">
                   <div className="flex items-center gap-2.5">
-                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${
-                      isAdd ? 'bg-emerald-500/8' : 'bg-red-500/8'
-                    }`}>
+                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${isAdd ? 'bg-emerald-500/8' : 'bg-red-500/8'}`}>
                       {isAdd ? <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" /> : <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />}
                     </div>
                     <div>
                       <p className="text-[11px] font-semibold">{asset?.name ?? '—'}</p>
-                      <p className="text-[9px] text-muted-foreground/30 mt-0.5">{tx.notes || tx.date}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[9px] text-muted-foreground/30">{formatRelativeDate(tx.date)}</span>
+                        {tx.notes && (
+                          <>
+                            <span className="text-[9px] text-muted-foreground/15">·</span>
+                            <span className="text-[9px] text-muted-foreground/40 truncate max-w-[100px]">{tx.notes}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <span className={`text-[12px] font-bold number-display ${isAdd ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -381,33 +375,141 @@ export function DashboardPage({ userName }: { userName: string | null }) {
         </motion.section>
       )}
 
-      {/* Empty State — First-time user onboarding */}
-      {assets.length === 0 && (
+      {/* Empty State — with loading guard (issue #9) */}
+      {assets.length === 0 && !isLoading && (
         <motion.section variants={fadeUp} className="px-4 mt-4 pb-3">
           <div className="card-elevated p-5 text-center space-y-3">
-            <motion.div
-              animate={{ y: [0, -3, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              className="text-[36px]"
-            >
-              🚀
-            </motion.div>
+            <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} className="text-[36px]">🚀</motion.div>
             <div>
               <p className="text-[14px] font-bold">Selamat datang di AsetKu!</p>
-              <p className="text-[11px] text-muted-foreground/50 mt-1 leading-relaxed">
-                Mulai lacak kekayaanmu dengan menambah aset pertama. Bisa rekening bank, saham, crypto, properti, atau apapun.
-              </p>
+              <p className="text-[11px] text-muted-foreground/50 mt-1 leading-relaxed">Mulai lacak kekayaanmu dengan menambah aset pertama.</p>
             </div>
-            <button
-              onClick={() => navigate('assets')}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full btn-gold text-[#3d2e00] text-[11px] font-bold shadow-md shadow-amber-500/20 press-scale"
-            >
+            <button onClick={() => setShowAssetForm(true)} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full btn-gold text-[#3d2e00] text-[11px] font-bold shadow-md shadow-amber-500/20 press-scale">
               <Wallet className="h-3.5 w-3.5" /> Tambah Aset Pertama
             </button>
           </div>
         </motion.section>
       )}
     </motion.div>
+
+      {/* Modals */}
+      <AssetFormModal open={showAssetForm} onClose={() => setShowAssetForm(false)} editId={null} />
+      <GoalFormModal open={showGoalForm} onClose={() => setShowGoalForm(false)} editId={null} />
+
+      {/* Transaction Asset Picker — Bottom Sheet */}
+      <AnimatePresence>
+        {showTxPicker && (
+          <motion.div
+            key="tx-picker-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-end justify-center"
+            onClick={() => setShowTxPicker(false)}
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              className="relative w-full max-w-lg bg-surface rounded-t-3xl p-4 pb-8 safe-bottom border-t border-border/20 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
+              <h3 className="text-[14px] font-bold mb-3">Pilih Aset untuk Transaksi</h3>
+              {assets.length === 0 ? (
+                <p className="text-center text-[12px] text-muted-foreground/50 py-8">Belum ada aset. Tambah aset dulu ya.</p>
+              ) : (
+                <div className="space-y-1 max-h-[50vh] overflow-y-auto no-scrollbar">
+                  {assets.map((asset) => {
+                    const catName = categories.find(c => c.id === asset.categoryId)?.name ?? '';
+                    const IconComp = CATEGORY_ICONS[catName] || Package;
+                    const val = getAssetValue(asset.id);
+                    return (
+                      <button
+                        key={asset.id}
+                        onClick={() => { setTxAssetId(asset.id); setShowTxPicker(false); setShowTxTypePicker(true); }}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-surface-secondary/70 active:bg-surface-secondary transition-colors text-left press-scale"
+                      >
+                        <div className="h-9 w-9 rounded-xl bg-surface-secondary flex items-center justify-center border border-border/15">
+                          <IconComp className="h-4 w-4 text-muted-foreground/60" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-semibold truncate">{asset.name}</p>
+                          <p className="text-[10px] text-muted-foreground/40">{catName}</p>
+                        </div>
+                        <span className="text-[11px] font-bold number-display text-muted-foreground/60">{formatCompact(val)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transaction Type Picker — Bottom Sheet */}
+      <AnimatePresence>
+        {showTxTypePicker && (
+          <motion.div
+            key="tx-type-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-end justify-center"
+            onClick={() => setShowTxTypePicker(false)}
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              className="relative w-full max-w-lg bg-surface rounded-t-3xl p-4 pb-8 safe-bottom border-t border-border/20 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
+              <h3 className="text-[14px] font-bold mb-1">Jenis Transaksi</h3>
+              <p className="text-[11px] text-muted-foreground/40 mb-4">
+                {assets.find(a => a.id === txAssetId)?.name ?? 'Aset'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setTxType('add'); setShowTxTypePicker(false); setShowTxForm(true); }}
+                  className="flex-1 flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-success/5 border border-success/15 press-scale active:bg-success/10 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-2xl bg-success/10 flex items-center justify-center">
+                    <ArrowUpRight className="h-6 w-6 text-success" />
+                  </div>
+                  <span className="text-[12px] font-bold text-success">Tambah Nilai</span>
+                </button>
+                <button
+                  onClick={() => { setTxType('subtract'); setShowTxTypePicker(false); setShowTxForm(true); }}
+                  className="flex-1 flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-destructive/5 border border-destructive/15 press-scale active:bg-destructive/10 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-2xl bg-destructive/10 flex items-center justify-center">
+                    <ArrowDownRight className="h-6 w-6 text-destructive" />
+                  </div>
+                  <span className="text-[12px] font-bold text-destructive">Kurangi Nilai</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {txAssetId && (
+        <TransactionFormModal
+          open={showTxForm}
+          onClose={() => { setShowTxForm(false); setTxAssetId(''); }}
+          assetId={txAssetId}
+          type={txType}
+        />
+      )}
     </PageLayout>
   );
 }

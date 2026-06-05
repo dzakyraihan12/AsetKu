@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Edit2, Trash2, Plus } from 'lucide-react';
+import { Edit2, Trash2, Plus, Minus } from 'lucide-react';
 import { haptic } from '@/lib/haptics';
 
 interface SwipeableAssetItemProps {
@@ -10,12 +10,13 @@ interface SwipeableAssetItemProps {
   onEdit: () => void;
   onDelete: () => void;
   onAddTransaction: () => void;
+  onSubtractTransaction: () => void;
 }
 
 const SWIPE_THRESHOLD = 80;
-const ACTION_WIDTH = 180;
+const ACTION_WIDTH = 230;
 
-export function SwipeableAssetItem({ children, onEdit, onDelete, onAddTransaction }: SwipeableAssetItemProps) {
+export function SwipeableAssetItem({ children, onEdit, onDelete, onAddTransaction, onSubtractTransaction }: SwipeableAssetItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
@@ -28,11 +29,9 @@ export function SwipeableAssetItem({ children, onEdit, onDelete, onAddTransactio
     const velocity = info.velocity.x;
 
     if (offset < -SWIPE_THRESHOLD || velocity < -500) {
-      // Open actions
       haptic('light');
       setIsOpen(true);
     } else {
-      // Close actions
       setIsOpen(false);
     }
   };
@@ -40,7 +39,6 @@ export function SwipeableAssetItem({ children, onEdit, onDelete, onAddTransactio
   const handleAction = (action: () => void) => {
     haptic('medium');
     setIsOpen(false);
-    // Small delay to let animation finish
     setTimeout(action, 150);
   };
 
@@ -53,26 +51,34 @@ export function SwipeableAssetItem({ children, onEdit, onDelete, onAddTransactio
       >
         <button
           onClick={() => handleAction(onAddTransaction)}
-          className="flex flex-col items-center justify-center h-12 w-14 rounded-xl text-white shadow-md shadow-sky-900/20 btn-gradient"
+          className="flex flex-col items-center justify-center h-12 w-12 rounded-xl text-white shadow-md shadow-sky-900/20 btn-gradient"
         >
           <Plus className="h-4 w-4" />
-          <span className="text-[8px] font-bold mt-0.5">Tambah</span>
+          <span className="text-[7px] font-bold mt-0.5">Tambah</span>
+        </button>
+        <button
+          onClick={() => handleAction(onSubtractTransaction)}
+          className="flex flex-col items-center justify-center h-12 w-12 rounded-xl text-white shadow-md shadow-orange-500/20"
+          style={{ background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)' }}
+        >
+          <Minus className="h-4 w-4" />
+          <span className="text-[7px] font-bold mt-0.5">Kurangi</span>
         </button>
         <button
           onClick={() => handleAction(onEdit)}
-          className="flex flex-col items-center justify-center h-12 w-14 rounded-xl text-white shadow-md shadow-amber-500/25"
+          className="flex flex-col items-center justify-center h-12 w-12 rounded-xl text-white shadow-md shadow-amber-500/25"
           style={{ background: 'linear-gradient(135deg, #FDCC09 0%, #D4A406 100%)' }}
         >
           <Edit2 className="h-4 w-4 text-[#3d2e00]" />
-          <span className="text-[8px] font-bold mt-0.5 text-[#3d2e00]">Edit</span>
+          <span className="text-[7px] font-bold mt-0.5 text-[#3d2e00]">Edit</span>
         </button>
         <button
           onClick={() => handleAction(onDelete)}
-          className="flex flex-col items-center justify-center h-12 w-14 rounded-xl text-white shadow-md shadow-red-500/25"
+          className="flex flex-col items-center justify-center h-12 w-12 rounded-xl text-white shadow-md shadow-red-500/25"
           style={{ background: 'linear-gradient(135deg, #EF4444 0%, #E11D48 100%)' }}
         >
           <Trash2 className="h-4 w-4" />
-          <span className="text-[8px] font-bold mt-0.5">Hapus</span>
+          <span className="text-[7px] font-bold mt-0.5">Hapus</span>
         </button>
       </motion.div>
 
