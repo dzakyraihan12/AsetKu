@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Poppins } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { AppShell } from '@/components/layout/AppShell';
 import { ToastProvider } from '@/components/ui/Toast';
 
-const poppins = Poppins({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-poppins',
+  variable: '--font-jakarta',
   display: 'swap',
   weight: ['400', '500', '600', '700', '800'],
 });
@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" suppressHydrationWarning className={`${poppins.variable} bg-background`}>
+    <html lang="id" suppressHydrationWarning className={`${jakarta.variable} bg-background`}>
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
