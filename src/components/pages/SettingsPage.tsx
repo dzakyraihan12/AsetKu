@@ -163,7 +163,11 @@ export function SettingsPage() {
           ].map(({ id, icon: Icon, label }) => (
             <button
               key={id}
-              onClick={() => setTheme(id)}
+              onClick={() => {
+                document.documentElement.classList.add('transitioning');
+                setTheme(id);
+                setTimeout(() => document.documentElement.classList.remove('transitioning'), 500);
+              }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[11px] font-bold transition-all ${
                 theme === id ? 'btn-gradient text-white shadow-sm shadow-sky-900/15' : 'text-muted-foreground/40'
               }`}

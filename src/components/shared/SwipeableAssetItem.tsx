@@ -31,6 +31,10 @@ export function SwipeableAssetItem({ children, onEdit, onDelete, onAddTransactio
     if (offset < -SWIPE_THRESHOLD || velocity < -500) {
       haptic('light');
       setIsOpen(true);
+      // Auto-dismiss swipe hint (#8)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('asetku_swipe_hint_dismissed', 'true');
+      }
     } else {
       setIsOpen(false);
     }

@@ -14,6 +14,7 @@ import { getAvatarEmoji } from '@/components/shared/AvatarPicker';
 import { AssetFormModal } from '@/components/shared/AssetFormModal';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
 import { TransactionFormModal } from '@/components/shared/TransactionFormModal';
+import { SectionSkeleton } from '@/components/ui/Skeleton';
 import type { LucideIcon } from 'lucide-react';
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -44,6 +45,8 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
   const [txAssetId, setTxAssetId] = useState<string>('');
   const [txType, setTxType] = useState<'add' | 'subtract'>('add');
   const [showTxForm, setShowTxForm] = useState(false);
+  const [showAllTx, setShowAllTx] = useState(false);
+  const [changePeriod, setChangePeriod] = useState<'day' | 'week' | 'month'>('month');
 
   const toggleHideBalance = () => {
     const next = !hideBalance;
@@ -67,6 +70,26 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
     return goals[0];
   }, [goals]);
 
+  const periodChange = useMemo(() => {
+    const now = new Date();
+    let filterFn: (date: string) => boolean;
+    if (changePeriod === 'day') {
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      filterFn = (date) => date === today;
+    } else if (changePeriod === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+      filterFn = (date) => date >= weekAgoStr;
+    } else {
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      filterFn = (date) => date.startsWith(key);
+    }
+    return transactions
+      .filter((t) => filterFn(t.date))
+      .reduce((sum, t) => sum + (t.type === 'add' ? t.amount : -t.amount), 0);
+  }, [transactions, changePeriod]);
+
+  // Keep monthChange for backwards compat in other calculations
   const monthChange = useMemo(() => {
     const now = new Date();
     const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -75,8 +98,9 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       .reduce((sum, t) => sum + (t.type === 'add' ? t.amount : -t.amount), 0);
   }, [transactions]);
 
-  const prevTotal = totalValue - monthChange;
-  const monthPct = prevTotal > 0 ? ((monthChange / prevTotal) * 100).toFixed(1) : '0';
+  const prevTotal = totalValue - periodChange;
+  const periodPct = prevTotal > 0 ? ((periodChange / prevTotal) * 100).toFixed(1) : '0';
+  const periodLabel = changePeriod === 'day' ? 'hari ini' : changePeriod === 'week' ? 'minggu ini' : 'bulan ini';
   const progress = primaryGoal ? calculateProgress(totalValue, primaryGoal.targetAmount) : 0;
 
   const categoryAllocation = useMemo(() => {
@@ -95,6 +119,20 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
 
   const recentTxs = useMemo(() => {
     return [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  }, [transactions]);
+
+  const allTxsSorted = useMemo(() => {
+    return [...transactions].sort((a, b) => b.date.localeCompare(a.date));
+  }, [transactions]);
+
+  // Micro-trend: previous month growth for stats pills (#5)
+  const prevMonthChange = useMemo(() => {
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const key = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+    return transactions
+      .filter((t) => t.date.startsWith(key))
+      .reduce((sum, t) => sum + (t.type === 'add' ? t.amount : -t.amount), 0);
   }, [transactions]);
 
   const getGreeting = () => {
@@ -119,9 +157,9 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
           </div>
         </div>
-        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${monthChange >= 0 ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25' : 'bg-red-400/20 text-red-200 border border-red-400/25'}`}>
-          {monthChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          {monthChange >= 0 ? '+' : ''}{monthPct}%
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${periodChange >= 0 ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25' : 'bg-red-400/20 text-red-200 border border-red-400/25'}`}>
+          {periodChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          {periodChange >= 0 ? '+' : ''}{periodPct}%
         </div>
       </div>
 
@@ -136,10 +174,23 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           {hideBalance ? '••••••••' : formatCurrency(animatedTotal)}
         </p>
         <div className="flex items-center gap-2 mt-1.5">
-          <span className={`text-[11px] font-semibold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-            {hideBalance ? '•••' : `${monthChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(monthChange))}`}
+          <span className={`text-[11px] font-semibold number-display ${periodChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            {hideBalance ? '•••' : `${periodChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(periodChange))}`}
           </span>
-          <span className="text-[10px] text-white/25">bulan ini</span>
+          {/* Period selector */}
+          <div className="flex items-center gap-0.5 bg-white/[0.08] rounded-full p-[2px]">
+            {(['day', 'week', 'month'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setChangePeriod(p)}
+                className={`px-2 py-[2px] rounded-full text-[8px] font-bold transition-all ${
+                  changePeriod === p ? 'bg-white/20 text-white' : 'text-white/30'
+                }`}
+              >
+                {p === 'day' ? '1H' : p === 'week' ? '1M' : '1B'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -153,9 +204,16 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           <p className="text-[14px] font-extrabold text-white number-display">{categoryAllocation.length}</p>
         </div>
         <div className="flex-1 bg-white/[0.08] backdrop-blur-md rounded-xl px-2.5 py-2 border border-white/[0.08]">
-          <p className="text-[8px] text-white/30 font-bold uppercase">Growth</p>
-          <p className={`text-[14px] font-extrabold number-display ${monthChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-            {monthChange >= 0 ? '+' : ''}{formatCompact(monthChange)}
+          <div className="flex items-center justify-between">
+            <p className="text-[8px] text-white/30 font-bold uppercase">Growth</p>
+            {prevMonthChange !== 0 && (
+              <span className={`text-[7px] font-bold ${monthChange > prevMonthChange ? 'text-emerald-300' : 'text-red-300'}`}>
+                {monthChange > prevMonthChange ? '↑' : '↓'}vs lalu
+              </span>
+            )}
+          </div>
+          <p className={`text-[14px] font-extrabold number-display ${periodChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            {periodChange >= 0 ? '+' : ''}{formatCompact(periodChange)}
           </p>
         </div>
       </div>
@@ -215,6 +273,9 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       )}
 
       {/* Growth Chart */}
+      {isLoading ? (
+        <SectionSkeleton type="chart" />
+      ) : (
       <motion.section variants={fadeUp} className="px-3 mt-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -227,6 +288,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           <GrowthChart />
         </div>
       </motion.section>
+      )}
 
       {/* Allocation */}
       {categoryAllocation.length > 0 && (
@@ -340,7 +402,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
               <Activity className="h-3.5 w-3.5 text-primary/60" />
               <span className="text-[12px] font-bold text-foreground">Aktivitas Terbaru</span>
             </div>
-            <button onClick={() => navigate('assets')} className="text-[10px] font-bold text-primary press-scale">Lihat semua</button>
+            <button onClick={() => setShowAllTx(true)} className="text-[10px] font-bold text-primary press-scale">Lihat semua</button>
           </div>
           <div className="card-elevated overflow-hidden divide-y divide-border/6">
             {recentTxs.map((tx) => {
@@ -474,8 +536,11 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             >
               <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
               <h3 className="text-[14px] font-bold mb-1">Jenis Transaksi</h3>
-              <p className="text-[11px] text-muted-foreground/40 mb-4">
+              <p className="text-[11px] text-muted-foreground/40 mb-1">
                 {assets.find(a => a.id === txAssetId)?.name ?? 'Aset'}
+              </p>
+              <p className="text-[10px] text-muted-foreground/30 mb-4 number-display">
+                Saldo saat ini: <span className="font-semibold text-foreground/60">{formatCurrency(getAssetValue(txAssetId))}</span>
               </p>
               <div className="flex gap-3">
                 <button
@@ -485,7 +550,10 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
                   <div className="h-12 w-12 rounded-2xl bg-success/10 flex items-center justify-center">
                     <ArrowUpRight className="h-6 w-6 text-success" />
                   </div>
-                  <span className="text-[12px] font-bold text-success">Tambah Nilai</span>
+                  <div className="text-center">
+                    <span className="text-[12px] font-bold text-success block">Tambah Nilai</span>
+                    <span className="text-[9px] text-success/50">Pemasukan, investasi</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => { setTxType('subtract'); setShowTxTypePicker(false); setShowTxForm(true); }}
@@ -494,7 +562,10 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
                   <div className="h-12 w-12 rounded-2xl bg-destructive/10 flex items-center justify-center">
                     <ArrowDownRight className="h-6 w-6 text-destructive" />
                   </div>
-                  <span className="text-[12px] font-bold text-destructive">Kurangi Nilai</span>
+                  <div className="text-center">
+                    <span className="text-[12px] font-bold text-destructive block">Kurangi Nilai</span>
+                    <span className="text-[9px] text-destructive/50">Penarikan, penurunan</span>
+                  </div>
                 </button>
               </div>
             </motion.div>
@@ -510,6 +581,68 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           type={txType}
         />
       )}
+
+      {/* Full Transaction History Bottom Sheet (#3) */}
+      <AnimatePresence>
+        {showAllTx && (
+          <motion.div
+            key="all-tx-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-end justify-center"
+            onClick={() => setShowAllTx(false)}
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              className="relative w-full max-w-lg bg-surface rounded-t-3xl p-4 pb-8 safe-bottom border-t border-border/20 shadow-xl"
+              style={{ maxHeight: '75vh' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[14px] font-bold">Semua Transaksi</h3>
+                <span className="text-[10px] text-muted-foreground/40 font-medium">{allTxsSorted.length} transaksi</span>
+              </div>
+              <div className="space-y-0 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(75vh - 100px)' }}>
+                {allTxsSorted.map((tx) => {
+                  const asset = assets.find((a) => a.id === tx.assetId);
+                  const isAdd = tx.type === 'add';
+                  return (
+                    <div key={tx.id} className="flex items-center justify-between py-2.5 px-1 border-b border-border/8 last:border-0">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${isAdd ? 'bg-emerald-500/8' : 'bg-red-500/8'}`}>
+                          {isAdd ? <ArrowUpRight className="h-3 w-3 text-emerald-500" /> : <ArrowDownRight className="h-3 w-3 text-red-500" />}
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold">{asset?.name ?? '—'}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[9px] text-muted-foreground/30">{formatRelativeDate(tx.date)}</span>
+                            {tx.notes && (
+                              <>
+                                <span className="text-[9px] text-muted-foreground/15">·</span>
+                                <span className="text-[9px] text-muted-foreground/40 truncate max-w-[120px]">{tx.notes}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`text-[11px] font-bold number-display ${isAdd ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {isAdd ? '+' : '−'}{formatCompact(tx.amount)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageLayout>
   );
 }

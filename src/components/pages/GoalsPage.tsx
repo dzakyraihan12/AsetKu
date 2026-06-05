@@ -181,9 +181,24 @@ export function GoalsPage() {
             return (
               <motion.div key={goal.id} variants={fadeUp}>
                 <div className={`rounded-[20px] border overflow-hidden shadow-card relative ${
-                  isComplete ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/30 dark:border-emerald-800/30' : 'bg-surface border-border/15'
+                  isComplete
+                    ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/30 dark:border-emerald-800/30'
+                    : daysLeft <= 0
+                      ? 'bg-red-50 dark:bg-red-950/10 border-red-300/30 dark:border-red-800/30 ring-1 ring-red-400/20'
+                      : daysLeft <= 7
+                        ? 'bg-amber-50 dark:bg-amber-950/10 border-amber-300/30 dark:border-amber-800/30 ring-1 ring-amber-400/20'
+                        : 'bg-surface border-border/15'
                 }`}>
-                  {isComplete && <Confetti active={isComplete} />}
+                  {isComplete && <Confetti active={(() => {
+                    // Only celebrate once per goal
+                    const key = `asetku_celebrated_${goal.id}`;
+                    if (typeof window !== 'undefined') {
+                      if (localStorage.getItem(key)) return false;
+                      localStorage.setItem(key, 'true');
+                      return true;
+                    }
+                    return false;
+                  })()} />}
                   {isComplete && (
                     <div className="h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400" />
                   )}
@@ -204,10 +219,18 @@ export function GoalsPage() {
                               <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                                 <Trophy className="h-3 w-3" /> Achieved! 🎉
                               </span>
+                            ) : daysLeft <= 0 ? (
+                              <span className="text-red-500 font-bold flex items-center gap-1 animate-pulse">
+                                <Calendar className="h-3 w-3" /> Overdue!
+                              </span>
+                            ) : daysLeft <= 7 ? (
+                              <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
+                                <Calendar className="h-3 w-3" /> {daysLeft} hari lagi ⚡
+                              </span>
                             ) : (
                               <>
                                 <Calendar className="h-3 w-3" />
-                                {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Overdue'}
+                                {`${daysLeft} hari lagi`}
                               </>
                             )}
                           </p>
@@ -328,6 +351,18 @@ export function GoalsPage() {
                         </div>
                         <span className="text-[10px] text-muted-foreground/60">
                           tercapai <span className="font-bold text-foreground">{estimation}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Monthly required amount */}
+                    {!isComplete && daysLeft > 0 && remaining > 0 && (
+                      <div className={`mt-2 flex items-center gap-2 ${!estimation ? 'pt-2.5 border-t border-border/8' : ''}`}>
+                        <div className="chip-accent">
+                          <Target className="h-2.5 w-2.5" /> Perlu
+                        </div>
+                        <span className="text-[10px] text-muted-foreground/60">
+                          <span className="font-bold text-foreground">{formatCompact(Math.ceil(remaining / Math.max(Math.ceil(daysLeft / 30), 1)))}</span>/bulan
                         </span>
                       </div>
                     )}

@@ -38,6 +38,21 @@ export function AssetsPage() {
   const [txAssetId, setTxAssetId] = useState<string>('');
   const [txType, setTxType] = useState<'add' | 'subtract'>('add');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [recentlyChanged, setRecentlyChanged] = useState<Set<string>>(new Set());
+
+  // Track transaction changes to flash updated assets
+  const txCount = transactions.length;
+  const prevTxCountRef = useState({ current: txCount })[0];
+  if (txCount > prevTxCountRef.current) {
+    const latestTx = [...transactions].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (latestTx && !recentlyChanged.has(latestTx.assetId)) {
+      setTimeout(() => {
+        setRecentlyChanged(new Set([latestTx.assetId]));
+        setTimeout(() => setRecentlyChanged(new Set()), 1500);
+      }, 200);
+    }
+  }
+  prevTxCountRef.current = txCount;
 
   const totalValue = useMemo(() => getTotalValue(), [assets, transactions]);
 
@@ -139,12 +154,16 @@ export function AssetsPage() {
         </div>
       </div>
 
-      {/* Swipe hint */}
-      {filteredAssets.length > 0 && (
-        <div className="px-3 pb-1">
-          <p className="text-[9px] text-muted-foreground/30 text-center">← Geser item ke kiri untuk aksi cepat</p>
-        </div>
-      )}
+      {/* Swipe hint — auto dismiss after first swipe (#8) */}
+      {filteredAssets.length > 0 && (() => {
+        const dismissed = typeof window !== 'undefined' && localStorage.getItem('asetku_swipe_hint_dismissed') === 'true';
+        if (dismissed) return null;
+        return (
+          <div className="px-3 pb-1">
+            <p className="text-[9px] text-muted-foreground/30 text-center">← Geser item ke kiri untuk aksi cepat</p>
+          </div>
+        );
+      })()}
 
       {/* List */}
       <motion.div
@@ -169,7 +188,7 @@ export function AssetsPage() {
                 onSubtractTransaction={() => { setTxAssetId(asset.id); setTxType('subtract'); setShowTxForm(true); }}
               >
                 <button
-                  className="w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border/15 text-left transition-all shadow-subtle overflow-hidden relative"
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border/15 text-left transition-all shadow-subtle overflow-hidden relative ${recentlyChanged.has(asset.id) ? 'value-flash' : ''}`}
                   onClick={() => setDetailAsset(asset.id)}
                 >
                   <div

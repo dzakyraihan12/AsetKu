@@ -103,6 +103,25 @@ export function StatisticsPage() {
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.03 } } }}
     >
+      {/* Empty state if no transactions (#9) */}
+      {transactions.length === 0 ? (
+        <motion.div variants={fadeUp} className="text-center py-16 px-6 space-y-4">
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-sky-500/10 to-violet-500/10 flex items-center justify-center mx-auto border border-border/20">
+            <span className="text-[26px]">📊</span>
+          </div>
+          <div>
+            <p className="text-[13px] font-bold">Belum ada data</p>
+            <p className="text-[11px] text-muted-foreground/50 mt-1.5 leading-relaxed">
+              Mulai catat transaksi di aset kamu untuk melihat insight pertumbuhan dan distribusi kekayaan.
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <BarChart3 className="h-4 w-4 text-primary/40" />
+            <span className="text-[10px] text-muted-foreground/40">Chart akan muncul setelah ada transaksi</span>
+          </div>
+        </motion.div>
+      ) : (
+      <>
       {/* Chart */}
       <motion.section variants={fadeUp} className="px-3 pt-3">
         <div className="flex items-center justify-between mb-1.5">
@@ -190,6 +209,8 @@ export function StatisticsPage() {
           ))}
         </div>
       </motion.section>
+      </>
+      )}
     </motion.div>
     </PageLayout>
   );

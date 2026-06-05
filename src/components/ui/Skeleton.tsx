@@ -17,6 +17,38 @@ export function Skeleton({ className }: SkeletonProps) {
   );
 }
 
+/** Section-level skeleton for progressive loading */
+export function SectionSkeleton({ type = 'card' }: { type?: 'card' | 'chart' | 'list' }) {
+  if (type === 'chart') {
+    return (
+      <div className="px-3 mt-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3.5 w-3.5 rounded" />
+          <Skeleton className="h-3.5 w-24" />
+        </div>
+        <Skeleton className="h-[120px] rounded-2xl" />
+      </div>
+    );
+  }
+  if (type === 'list') {
+    return (
+      <div className="px-3 mt-4 space-y-2">
+        <Skeleton className="h-3.5 w-28" />
+        <div className="space-y-1">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-14 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="px-3 mt-3">
+      <Skeleton className="h-[72px] rounded-2xl" />
+    </div>
+  );
+}
+
 export function DashboardSkeleton() {
   return (
     <div className="max-w-lg mx-auto pb-2">

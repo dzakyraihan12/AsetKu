@@ -167,6 +167,15 @@
     @apply transition-transform duration-75 ease-out active:scale-[0.96];
   }
 
+  .value-flash {
+    animation: value-flash 1.2s ease-out;
+  }
+
+  @keyframes value-flash {
+    0% { background-color: hsl(var(--success) / 0.15); }
+    100% { background-color: transparent; }
+  }
+
   .number-display {
     @apply font-tabular tracking-tight;
     font-feature-settings: "tnum" 1;
@@ -277,12 +286,12 @@ body {
   50% { transform: translateY(-3px); }
 }
 
-/* Smooth theme transitions */
+/* Smooth theme transitions (#7) */
 html.transitioning,
 html.transitioning *,
 html.transitioning *::before,
 html.transitioning *::after {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease !important;
+  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.4s ease !important;
 }
 
 @supports (padding-top: env(safe-area-inset-top)) {
