@@ -14,6 +14,7 @@ import { getAvatarEmoji } from '@/components/shared/AvatarPicker';
 import { AssetFormModal } from '@/components/shared/AssetFormModal';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
 import { TransactionFormModal } from '@/components/shared/TransactionFormModal';
+import { BatchTransactionModal } from '@/components/shared/BatchTransactionModal';
 import { SectionSkeleton } from '@/components/ui/Skeleton';
 import type { LucideIcon } from 'lucide-react';
 
@@ -46,6 +47,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
   const [txType, setTxType] = useState<'add' | 'subtract'>('add');
   const [showTxForm, setShowTxForm] = useState(false);
   const [showAllTx, setShowAllTx] = useState(false);
+  const [showBatchTx, setShowBatchTx] = useState(false);
   const [changePeriod, setChangePeriod] = useState<'day' | 'week' | 'month'>('month');
 
   const toggleHideBalance = () => {
@@ -136,12 +138,68 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
   }, [transactions]);
 
   const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return { text: 'Pagi', icon: Sun };
-    if (h < 17) return { text: 'Siang', icon: CloudSun };
-    if (h < 20) return { text: 'Sore', icon: Sunset };
-    return { text: 'Malam', icon: Moon };
+    const now = new Date();
+    const h = now.getHours();
+    const day = now.getDate();
+    const dayOfWeek = now.getDay();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    let timeGreeting: string;
+    let icon;
+    if (h < 12) { timeGreeting = 'Pagi'; icon = Sun; }
+    else if (h < 17) { timeGreeting = 'Siang'; icon = CloudSun; }
+    else if (h < 20) { timeGreeting = 'Sore'; icon = Sunset; }
+    else { timeGreeting = 'Malam'; icon = Moon; }
+
+    // Contextual sub-greeting
+    let context = '';
+    if (day >= 24 && day <= 26) {
+      context = '💸 Payday week!';
+    } else if (day >= 28 || day <= 1) {
+      context = '📋 Akhir bulan, cek target yuk';
+    } else if (dayOfWeek === 1) {
+      context = '🚀 Semangat awal minggu!';
+    } else if (dayOfWeek === 5) {
+      context = '🎉 Happy Friday!';
+    }
+
+    return { text: timeGreeting, icon, context };
   };
+
+  // Streak counter — consecutive days with transactions
+  const streak = useMemo(() => {
+    if (transactions.length === 0) return 0;
+    const uniqueDays = new Set(transactions.map(t => t.date));
+    const today = new Date();
+    let count = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (uniqueDays.has(key)) {
+        count++;
+      } else {
+        // Allow skipping today if no tx yet (check from yesterday)
+        if (i === 0) continue;
+        break;
+      }
+    }
+    return count;
+  }, [transactions]);
+
+  // Achievement badges
+  const achievements = useMemo(() => {
+    const badges: { id: string; emoji: string; label: string; earned: boolean }[] = [
+      { id: 'first-asset', emoji: '🏦', label: 'Aset pertama', earned: assets.length >= 1 },
+      { id: '5-assets', emoji: '💼', label: '5 aset tercatat', earned: assets.length >= 5 },
+      { id: '10-tx', emoji: '📝', label: '10 transaksi', earned: transactions.length >= 10 },
+      { id: '50-tx', emoji: '🔥', label: '50 transaksi', earned: transactions.length >= 50 },
+      { id: 'first-goal', emoji: '🎯', label: 'Target pertama', earned: goals.length >= 1 },
+      { id: '7-streak', emoji: '⚡', label: '7 hari streak', earned: streak >= 7 },
+      { id: '30-streak', emoji: '👑', label: '30 hari streak', earned: streak >= 30 },
+      { id: 'diversified', emoji: '🌈', label: 'Diversifikasi 3+', earned: categoryAllocation.length >= 3 },
+    ];
+    return badges;
+  }, [assets, transactions, goals, streak, categoryAllocation]);
 
   const greeting = getGreeting();
 
@@ -155,6 +213,9 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           <div>
             <p className="text-[11px] text-white/50 font-medium flex items-center gap-1"><greeting.icon className="h-3 w-3 text-white/60" /> Selamat {greeting.text}</p>
             <p className="text-[15px] font-extrabold text-white tracking-tight -mt-0.5">{userName || 'User'}</p>
+            {greeting.context && (
+              <p className="text-[9px] text-white/35 mt-0.5">{greeting.context}</p>
+            )}
           </div>
         </div>
         <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${periodChange >= 0 ? 'bg-emerald-400/20 text-emerald-200 border border-emerald-400/25' : 'bg-red-400/20 text-red-200 border border-red-400/25'}`}>
@@ -250,6 +311,39 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           </button>
         </div>
       </motion.section>
+
+      {/* Streak Counter & Achievements */}
+      {(streak > 1 || achievements.some(a => a.earned)) && (
+        <motion.section variants={fadeUp} className="px-3 mt-3">
+          <div className="flex gap-2">
+            {/* Streak */}
+            {streak > 1 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/5 border border-amber-500/10 flex-shrink-0">
+                <span className="text-[14px]">🔥</span>
+                <div>
+                  <p className="text-[12px] font-extrabold number-display text-amber-600 dark:text-amber-400">{streak}</p>
+                  <p className="text-[8px] text-amber-600/50 dark:text-amber-400/50 font-bold uppercase">Hari streak</p>
+                </div>
+              </div>
+            )}
+            {/* Latest earned badge */}
+            {(() => {
+              const earned = achievements.filter(a => a.earned);
+              const latest = earned[earned.length - 1];
+              if (!latest) return null;
+              return (
+                <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/10 min-w-0">
+                  <span className="text-[14px]">{latest.emoji}</span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold truncate">{latest.label}</p>
+                    <p className="text-[8px] text-muted-foreground/40 font-medium">{earned.length}/{achievements.length} badges</p>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </motion.section>
+      )}
 
       {/* Goal Progress - primary goal */}
       {primaryGoal && (
@@ -457,6 +551,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       {/* Modals */}
       <AssetFormModal open={showAssetForm} onClose={() => setShowAssetForm(false)} editId={null} />
       <GoalFormModal open={showGoalForm} onClose={() => setShowGoalForm(false)} editId={null} />
+      <BatchTransactionModal open={showBatchTx} onClose={() => setShowBatchTx(false)} />
 
       {/* Transaction Asset Picker — Bottom Sheet */}
       <AnimatePresence>
@@ -481,6 +576,19 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             >
               <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
               <h3 className="text-[14px] font-bold mb-3">Pilih Aset untuk Transaksi</h3>
+              {/* Batch option */}
+              <button
+                onClick={() => { setShowTxPicker(false); setShowBatchTx(true); }}
+                className="w-full flex items-center gap-3 p-3 mb-2 rounded-xl bg-amber-500/5 border border-amber-500/15 text-left press-scale"
+              >
+                <div className="h-9 w-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <span className="text-[14px]">⚡</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[12px] font-bold text-amber-700 dark:text-amber-400">Batch Mode</p>
+                  <p className="text-[9px] text-muted-foreground/40">Update banyak aset sekaligus</p>
+                </div>
+              </button>
               {assets.length === 0 ? (
                 <p className="text-center text-[12px] text-muted-foreground/50 py-8">Belum ada aset. Tambah aset dulu ya.</p>
               ) : (

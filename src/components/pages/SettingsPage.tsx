@@ -21,10 +21,11 @@ const fadeUp = {
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { categories, customGroups, addCategory, updateCategory, deleteCategory, deleteGroup, loadAll } = useStore();
+  const { categories, customGroups, assets, transactions, goals, addCategory, updateCategory, deleteCategory, deleteGroup, loadAll } = useStore();
   const [catName, setCatName] = useState('');
   const [editCatId, setEditCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState('');
+  const [catSearch, setCatSearch] = useState('');
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [editGroupId, setEditGroupId] = useState<string | null>(null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
@@ -195,8 +196,18 @@ export function SettingsPage() {
               <Plus className="h-3 w-3" />
             </Button>
           </div>
+          {categories.length > 6 && (
+            <input
+              placeholder="Cari kategori..."
+              value={catSearch}
+              onChange={(e) => setCatSearch(e.target.value)}
+              className="w-full h-7 mb-2 rounded-lg bg-surface-secondary/50 px-3 text-[10px] border border-border/10 focus:outline-none focus:border-primary/30 transition-all placeholder:text-muted-foreground/30"
+            />
+          )}
           <div className="space-y-0 max-h-36 overflow-y-auto">
-            {categories.map((cat) => (
+            {categories
+              .filter(cat => !catSearch || cat.name.toLowerCase().includes(catSearch.toLowerCase()))
+              .map((cat) => (
               <div key={cat.id} className="flex items-center justify-between py-2 px-1.5 rounded-lg hover:bg-surface-secondary/50 transition-colors">
                 {editCatId === cat.id ? (
                   <input
@@ -300,6 +311,34 @@ export function SettingsPage() {
             </div>
             <AlertTriangle className="h-4 w-4 text-destructive/40" />
           </button>
+        </div>
+      </motion.section>
+
+      {/* Achievements */}
+      <motion.section variants={fadeUp} className="px-3 pb-3">
+        <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Pencapaian</span>
+        <div className="mt-1.5 bg-surface border border-border/20 rounded-2xl p-3 shadow-card">
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { emoji: '🏦', label: 'Aset pertama', earned: assets.length >= 1 },
+              { emoji: '💼', label: '5 aset', earned: assets.length >= 5 },
+              { emoji: '📝', label: '10 transaksi', earned: transactions.length >= 10 },
+              { emoji: '🔥', label: '50 transaksi', earned: transactions.length >= 50 },
+              { emoji: '🎯', label: 'Target pertama', earned: goals.length >= 1 },
+              { emoji: '⚡', label: '7 hari streak', earned: (() => { const uniqueDays = new Set(transactions.map(t => t.date)); const today = new Date(); let count = 0; for (let i = 0; i < 365; i++) { const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i); const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; if (uniqueDays.has(key)) count++; else { if (i===0) continue; break; } } return count >= 7; })() },
+              { emoji: '👑', label: '30 hari streak', earned: (() => { const uniqueDays = new Set(transactions.map(t => t.date)); const today = new Date(); let count = 0; for (let i = 0; i < 365; i++) { const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i); const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; if (uniqueDays.has(key)) count++; else { if (i===0) continue; break; } } return count >= 30; })() },
+              { emoji: '🌈', label: 'Diversifikasi', earned: categories.filter(c => assets.some(a => a.categoryId === c.id)).length >= 3 },
+            ].map((badge) => (
+              <div key={badge.label} className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-center ${badge.earned ? 'bg-amber-500/5 border-amber-500/15' : 'bg-surface-secondary/30 border-border/10 opacity-40'}`}>
+                <span className="text-[18px]">{badge.emoji}</span>
+                <span className="text-[8px] font-bold text-muted-foreground/60 leading-tight">{badge.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[9px] text-muted-foreground/30 text-center mt-2">
+            {[assets.length >= 1, assets.length >= 5, transactions.length >= 10, transactions.length >= 50, goals.length >= 1].filter(Boolean).length + 
+             (categories.filter(c => assets.some(a => a.categoryId === c.id)).length >= 3 ? 1 : 0)}/8 tercapai
+          </p>
         </div>
       </motion.section>
 

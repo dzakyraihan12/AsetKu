@@ -48,6 +48,16 @@ export function StatisticsPage() {
   const avgMonthly = Math.round(totalGrowth6m / 6);
   const bestMonth = [...monthlyGrowth].sort((a, b) => b.growth - a.growth)[0];
 
+  // Weekly growth
+  const weeklyGrowth = useMemo(() => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+    return transactions
+      .filter((t) => t.date >= weekAgoStr)
+      .reduce((s, t) => s + (t.type === 'add' ? t.amount : -t.amount), 0);
+  }, [transactions]);
+
   const headerContent = (
     <>
       <div>
@@ -57,39 +67,50 @@ export function StatisticsPage() {
         </div>
         <p className="text-[11px] text-white/45 mt-1 ml-[34px]">Pantau pertumbuhan wealth kamu</p>
       </div>
-      {/* Key Stats inside hero — added total 6 month growth (#10) */}
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2.5 border border-white/[0.06]">
+      {/* Key Stats inside hero */}
+      <div className="grid grid-cols-4 gap-1.5 mt-4">
+        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2 border border-white/[0.06]">
           <div className="flex items-center gap-1 mb-1">
-            <div className="h-4 w-4 rounded-md bg-sky-400/15 flex items-center justify-center">
-              <Flame className="h-2.5 w-2.5 text-sky-300" />
+            <div className="h-3.5 w-3.5 rounded-md bg-violet-400/15 flex items-center justify-center">
+              <TrendingUp className="h-2 w-2 text-violet-300" />
             </div>
-            <p className="text-[8px] text-white/35 uppercase font-bold">Total 6bln</p>
+            <p className="text-[7px] text-white/35 uppercase font-bold">1 Minggu</p>
           </div>
-          <p className={`text-[14px] font-extrabold number-display ${totalGrowth6m >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+          <p className={`text-[12px] font-extrabold number-display ${weeklyGrowth >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+            {weeklyGrowth >= 0 ? '+' : ''}{formatCompact(weeklyGrowth)}
+          </p>
+        </div>
+        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2 border border-white/[0.06]">
+          <div className="flex items-center gap-1 mb-1">
+            <div className="h-3.5 w-3.5 rounded-md bg-sky-400/15 flex items-center justify-center">
+              <Flame className="h-2 w-2 text-sky-300" />
+            </div>
+            <p className="text-[7px] text-white/35 uppercase font-bold">6 Bulan</p>
+          </div>
+          <p className={`text-[12px] font-extrabold number-display ${totalGrowth6m >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
             {totalGrowth6m >= 0 ? '+' : ''}{formatCompact(totalGrowth6m)}
           </p>
         </div>
-        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2.5 border border-white/[0.06]">
+        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2 border border-white/[0.06]">
           <div className="flex items-center gap-1 mb-1">
-            <div className="h-4 w-4 rounded-md bg-emerald-400/15 flex items-center justify-center">
-              <TrendingUp className="h-2.5 w-2.5 text-emerald-300" />
+            <div className="h-3.5 w-3.5 rounded-md bg-emerald-400/15 flex items-center justify-center">
+              <TrendingUp className="h-2 w-2 text-emerald-300" />
             </div>
-            <p className="text-[8px] text-white/35 uppercase font-bold">Avg/bln</p>
+            <p className="text-[7px] text-white/35 uppercase font-bold">Avg/bln</p>
           </div>
-          <p className={`text-[14px] font-extrabold number-display ${avgMonthly >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+          <p className={`text-[12px] font-extrabold number-display ${avgMonthly >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
             {avgMonthly >= 0 ? '+' : ''}{formatCompact(avgMonthly)}
           </p>
         </div>
-        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2.5 border border-white/[0.06]">
+        <div className="bg-white/[0.07] backdrop-blur-md rounded-2xl p-2 border border-white/[0.06]">
           <div className="flex items-center gap-1 mb-1">
-            <div className="h-4 w-4 rounded-md bg-amber-400/15 flex items-center justify-center">
-              <Award className="h-2.5 w-2.5 text-amber-300" />
+            <div className="h-3.5 w-3.5 rounded-md bg-amber-400/15 flex items-center justify-center">
+              <Award className="h-2 w-2 text-amber-300" />
             </div>
-            <p className="text-[8px] text-white/35 uppercase font-bold">Terbaik</p>
+            <p className="text-[7px] text-white/35 uppercase font-bold">Terbaik</p>
           </div>
-          <p className="text-[14px] font-extrabold number-display text-emerald-300">+{formatCompact(bestMonth?.growth ?? 0)}</p>
-          <p className="text-[8px] text-white/25 mt-0.5 font-medium">{bestMonth?.month}</p>
+          <p className="text-[12px] font-extrabold number-display text-emerald-300">+{formatCompact(bestMonth?.growth ?? 0)}</p>
+          <p className="text-[7px] text-white/25 mt-0.5 font-medium">{bestMonth?.month}</p>
         </div>
       </div>
     </>

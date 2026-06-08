@@ -77,7 +77,7 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={type === 'add' ? 'Tambah Nilai' : 'Kurangi Nilai'}>
+    <Modal open={open} onClose={onClose} title={type === 'add' ? 'Tambah Nilai' : 'Kurangi Nilai'} preventClose={watchedAmount > 0}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Asset name context */}
         {assetName && (

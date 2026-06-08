@@ -40,10 +40,10 @@
   .dark {
     --background: 220 25% 8%;
     --foreground: 210 15% 95%;
-    --surface: 220 22% 12%;
-    --surface-secondary: 220 20% 15%;
-    --surface-tertiary: 220 18% 18%;
-    --card: 220 22% 12%;
+    --surface: 220 22% 13%;
+    --surface-secondary: 220 20% 17%;
+    --surface-tertiary: 220 18% 21%;
+    --card: 220 22% 13%;
     --card-foreground: 210 15% 95%;
     --primary: 197 82% 54%;
     --primary-foreground: 220 30% 8%;
@@ -105,7 +105,7 @@
 
 @layer utilities {
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   }
 
   .safe-top {
