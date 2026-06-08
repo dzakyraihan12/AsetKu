@@ -15,6 +15,7 @@ import { AssetFormModal } from '@/components/shared/AssetFormModal';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
 import { TransactionFormModal } from '@/components/shared/TransactionFormModal';
 import { BatchTransactionModal } from '@/components/shared/BatchTransactionModal';
+import { TransactionHistoryModal } from '@/components/shared/TransactionHistoryModal';
 import { SectionSkeleton } from '@/components/ui/Skeleton';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import type { LucideIcon } from 'lucide-react';
@@ -122,10 +123,6 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
 
   const recentTxs = useMemo(() => {
     return [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
-  }, [transactions]);
-
-  const allTxsSorted = useMemo(() => {
-    return [...transactions].sort((a, b) => b.date.localeCompare(a.date));
   }, [transactions]);
 
   // Micro-trend: previous month growth for stats pills (#5)
@@ -722,67 +719,8 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
         />
       )}
 
-      {/* Full Transaction History Bottom Sheet (#3) */}
-      <AnimatePresence>
-        {showAllTx && (
-          <motion.div
-            key="all-tx-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[60] flex items-end justify-center"
-            onClick={() => setShowAllTx(false)}
-          >
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-              className="relative w-full max-w-lg bg-surface rounded-t-3xl p-4 pb-8 safe-bottom border-t border-border/20 shadow-xl"
-              style={{ maxHeight: '75vh' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[14px] font-bold">Semua Transaksi</h3>
-                <span className="text-[10px] text-muted-foreground/40 font-medium">{allTxsSorted.length} transaksi</span>
-              </div>
-              <div className="space-y-0 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(75vh - 100px)' }}>
-                {allTxsSorted.map((tx) => {
-                  const asset = assets.find((a) => a.id === tx.assetId);
-                  const isAdd = tx.type === 'add';
-                  return (
-                    <div key={tx.id} className="flex items-center justify-between py-2.5 px-1 border-b border-border/8 last:border-0">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${isAdd ? 'bg-emerald-500/8' : 'bg-red-500/8'}`}>
-                          {isAdd ? <ArrowUpRight className="h-3 w-3 text-emerald-500" /> : <ArrowDownRight className="h-3 w-3 text-red-500" />}
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-semibold">{asset?.name ?? '—'}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[9px] text-muted-foreground/30">{formatRelativeDate(tx.date)}</span>
-                            {tx.notes && (
-                              <>
-                                <span className="text-[9px] text-muted-foreground/15">·</span>
-                                <span className="text-[9px] text-muted-foreground/40 truncate max-w-[120px]">{tx.notes}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`text-[11px] font-bold number-display ${isAdd ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {isAdd ? '+' : '−'}{formatCompact(tx.amount)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Full Transaction History */}
+      <TransactionHistoryModal open={showAllTx} onClose={() => setShowAllTx(false)} />
     </PageLayout>
   );
 }

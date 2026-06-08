@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap, Star, Calculator } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap, Star, Calculator, Archive } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store';
-import { formatCompact, formatCurrency, calculateProgress, cn } from '@/lib/utils';
+import { formatCompact, calculateProgress, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { CircularProgress } from '@/components/ui/Progress';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
@@ -30,9 +30,26 @@ export function GoalsPage() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [simAmount, setSimAmount] = useState(0);
   const [simGoalId, setSimGoalId] = useState<string>('');
+  const [showArchive, setShowArchive] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const totalValue = getTotalValue();
+
+  const getGoalCurrent = (goal: typeof goals[0]) => {
+    if (goal.customGroupId) return getGroupTotal(goal.customGroupId);
+    return totalValue;
+  };
+
+  // Split goals into active and completed
+  const activeGoals = goals.filter(goal => {
+    const current = getGoalCurrent(goal);
+    return calculateProgress(current, goal.targetAmount) < 100;
+  });
+
+  const completedGoals = goals.filter(goal => {
+    const current = getGoalCurrent(goal);
+    return calculateProgress(current, goal.targetAmount) >= 100;
+  });
 
   // Close dropdown on tap outside (#8)
   useEffect(() => {
@@ -65,11 +82,6 @@ export function GoalsPage() {
 
   const primaryProgress = primaryGoal ? calculateProgress(totalValue, primaryGoal.targetAmount) : 0;
 
-  const getGoalCurrent = (goal: typeof goals[0]) => {
-    if (goal.customGroupId) return getGroupTotal(goal.customGroupId);
-    return totalValue;
-  };
-
   const estimateTarget = (current: number, target: number) => {
     const txsSorted = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
     if (txsSorted.length < 2) return null;
@@ -94,7 +106,7 @@ export function GoalsPage() {
             <Target className="h-4 w-4 text-white/80" />
             <h1 className="text-[16px] font-extrabold text-white tracking-tight">Target</h1>
           </div>
-          <p className="text-[11px] text-white/45 mt-1 ml-[34px]">{goals.length} target aktif</p>
+          <p className="text-[11px] text-white/45 mt-1 ml-[34px]">{activeGoals.length} target aktif{completedGoals.length > 0 ? ` · ${completedGoals.length} tercapai` : ''}</p>
         </div>
         <Button variant="gold" size="sm" onClick={() => { setEditId(null); setShowForm(true); }}>
           <Plus className="h-3.5 w-3.5" /> Buat
@@ -168,13 +180,15 @@ export function GoalsPage() {
           </Button>
         </div>
       ) : (
+        <>
+        {activeGoals.length > 0 ? (
         <motion.div
           className="px-3 pt-4 pb-4 space-y-2.5"
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.05 } } }}
         >
-          {goals.map((goal) => {
+          {activeGoals.map((goal) => {
             const current = getGoalCurrent(goal);
             const progress = calculateProgress(current, goal.targetAmount);
             const remaining = Math.max(goal.targetAmount - current, 0);
@@ -401,9 +415,120 @@ export function GoalsPage() {
             );
           })}
         </motion.div>
-      )}
+        ) : (
+          <div className="text-center py-8 px-6">
+            <p className="text-[20px] mb-2">🏆</p>
+            <p className="text-[12px] font-bold text-muted-foreground/60">Semua target tercapai!</p>
+            <p className="text-[10px] text-muted-foreground/40 mt-1">Buat target baru untuk terus berkembang.</p>
+          </div>
+        )}
 
       <GoalFormModal open={showForm} onClose={() => setShowForm(false)} editId={editId} />
+
+      {/* Completed Goals Archive */}
+      {completedGoals.length > 0 && (
+        <div className="px-3 pb-3">
+          <button
+            onClick={() => setShowArchive(!showArchive)}
+            className="w-full flex items-center justify-between py-3 px-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 press-scale"
+          >
+            <div className="flex items-center gap-2">
+              <Archive className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">Target Tercapai</span>
+              <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-emerald-500/15 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                {completedGoals.length}
+              </span>
+            </div>
+            <motion.span
+              animate={{ rotate: showArchive ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-emerald-500/50 text-[12px]"
+            >
+              ▼
+            </motion.span>
+          </button>
+
+          <AnimatePresence>
+            {showArchive && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="pt-2.5 space-y-2">
+                  {completedGoals.map((goal) => {
+                    const current = getGoalCurrent(goal);
+                    return (
+                      <motion.div
+                        key={goal.id}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-[20px] border overflow-hidden bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/30 dark:border-emerald-800/30"
+                      >
+                        <div className="h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400" />
+                        <div className="p-3.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                                <Trophy className="h-4.5 w-4.5 text-emerald-500" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  {goal.emoji && <span className="text-[12px]">{goal.emoji}</span>}
+                                  <h3 className="text-[13px] font-bold">{goal.name}</h3>
+                                </div>
+                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 flex items-center gap-1">
+                                  <Trophy className="h-3 w-3" /> Tercapai! 🎉
+                                </p>
+                              </div>
+                            </div>
+                            <div className="relative" ref={menuOpen === goal.id ? menuRef : undefined}>
+                              <button
+                                onClick={() => setMenuOpen(menuOpen === goal.id ? null : goal.id)}
+                                className="p-1.5 rounded-lg hover:bg-surface-secondary transition-colors"
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground/25" />
+                              </button>
+                              {menuOpen === goal.id && (
+                                <div className="absolute right-0 top-8 bg-surface border border-border/20 rounded-2xl shadow-elevated py-1.5 z-10 min-w-[130px] animate-scale-in">
+                                  <button
+                                    onClick={() => { setMenuOpen(null); setEditId(goal.id); setShowForm(true); }}
+                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-[11px] hover:bg-surface-secondary"
+                                  >
+                                    <Edit2 className="h-3 w-3" /> Edit
+                                  </button>
+                                  <button
+                                    onClick={() => { setMenuOpen(null); setConfirmDeleteId(goal.id); }}
+                                    className="flex items-center gap-2 w-full px-3.5 py-2 text-[11px] text-destructive hover:bg-destructive-soft"
+                                  >
+                                    <Trash2 className="h-3 w-3" /> Hapus
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 mt-3">
+                            <div className="bg-emerald-500/5 rounded-xl p-2 border border-emerald-500/10 text-center">
+                              <p className="text-[8px] text-emerald-600/50 uppercase font-bold">Tercapai</p>
+                              <p className="text-[12px] font-bold number-display mt-0.5 text-emerald-600 dark:text-emerald-400">{formatCompact(current)}</p>
+                            </div>
+                            <div className="bg-emerald-500/5 rounded-xl p-2 border border-emerald-500/10 text-center">
+                              <p className="text-[8px] text-emerald-600/50 uppercase font-bold">Target</p>
+                              <p className="text-[12px] font-bold number-display mt-0.5">{formatCompact(goal.targetAmount)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* What-if Simulator */}
       {goals.length > 0 && !showSimulator && (
@@ -503,6 +628,8 @@ export function GoalsPage() {
         }}
         onCancel={() => setConfirmDeleteId(null)}
       />
+      </>
+      )}
     </PageLayout>
   );
 }

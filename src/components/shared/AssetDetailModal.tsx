@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { TransactionFormModal } from '@/components/shared/TransactionFormModal';
+import { TransactionHistoryModal } from '@/components/shared/TransactionHistoryModal';
 
 interface Props {
   assetId: string | null;
@@ -50,6 +51,7 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
   const [showTxForm, setShowTxForm] = useState(false);
   const [txType, setTxType] = useState<'add' | 'subtract'>('add');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showTxHistory, setShowTxHistory] = useState(false);
 
   const asset = assetId ? assets.find((a) => a.id === assetId) : null;
 
@@ -145,7 +147,12 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
 
           {/* Transaction History */}
           <div className="space-y-2">
-            <h4 className="text-[10px] text-muted-foreground/45 uppercase tracking-wider font-bold">Riwayat Transaksi</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-[10px] text-muted-foreground/45 uppercase tracking-wider font-bold">Riwayat Transaksi</h4>
+              {displayTxs.length > 0 && (
+                <button onClick={() => setShowTxHistory(true)} className="text-[10px] font-bold text-primary press-scale">Lihat semua</button>
+              )}
+            </div>
             {displayTxs.length === 0 ? (
               <div className="text-center py-6 space-y-2">
                 <FileText className="h-6 w-6 text-muted-foreground/30 mx-auto" />
@@ -196,6 +203,7 @@ export function AssetDetailModal({ assetId, onClose, onEdit }: Props) {
       </Modal>
 
       <TransactionFormModal open={showTxForm} onClose={() => setShowTxForm(false)} assetId={asset.id} type={txType} />
+      <TransactionHistoryModal open={showTxHistory} onClose={() => setShowTxHistory(false)} assetId={asset.id} />
       <ConfirmDialog
         open={showConfirm}
         title="Hapus Aset?"
