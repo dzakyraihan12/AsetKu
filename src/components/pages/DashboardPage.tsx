@@ -16,6 +16,7 @@ import { GoalFormModal } from '@/components/shared/GoalFormModal';
 import { TransactionFormModal } from '@/components/shared/TransactionFormModal';
 import { BatchTransactionModal } from '@/components/shared/BatchTransactionModal';
 import { SectionSkeleton } from '@/components/ui/Skeleton';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import type { LucideIcon } from 'lucide-react';
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -443,7 +444,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
                     <div className="h-3 w-3 rounded-full shadow-sm" style={{ backgroundColor: colors[i % colors.length] }} />
                     <p className="text-[10px] text-muted-foreground/60 truncate font-semibold">{cat.name}</p>
                   </div>
-                  <p className="text-[13px] font-extrabold number-display">{formatCompact(cat.value)}</p>
+                  <p className="text-[13px] font-extrabold number-display"><AnimatedNumber value={cat.value} format={formatCompact} /></p>
                   <p className="text-[10px] text-muted-foreground/30 number-display font-bold mt-0.5">{pct}%</p>
                 </motion.div>
               );
@@ -482,7 +483,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[12px] font-bold number-display">{formatCompact(asset.value)}</span>
+                    <span className="text-[12px] font-bold number-display"><AnimatedNumber value={asset.value} format={formatCompact} /></span>
                   </div>
                 </motion.div>
               );
@@ -505,7 +506,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
               return (
                 <div key={group.id} className="card-elevated p-3">
                   <p className="text-[10px] text-muted-foreground/45 truncate font-semibold">{group.name}</p>
-                  <p className="text-[14px] font-extrabold number-display mt-1">{formatCompact(val)}</p>
+                  <p className="text-[14px] font-extrabold number-display mt-1"><AnimatedNumber value={val} format={formatCompact} /></p>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex-1 h-1 rounded-full bg-surface-secondary overflow-hidden">
                       <motion.div className="h-full rounded-full gradient-bg" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} />

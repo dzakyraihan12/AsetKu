@@ -48,6 +48,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setShowOnboarding(true);
     }
 
+    // Apply saved accent color
+    const savedAccent = localStorage.getItem('asetku_accent');
+    if (savedAccent && savedAccent !== 'blue') {
+      import('@/components/pages/SettingsPage').catch(() => {});
+      // Inline accent application for immediate load
+      const accents: Record<string, { primary: string; primaryLight: string }> = {
+        purple: { primary: '263 70% 50%', primaryLight: '258 90% 66%' },
+        green: { primary: '162 83% 24%', primaryLight: '160 64% 48%' },
+        orange: { primary: '21 90% 40%', primaryLight: '25 95% 53%' },
+        pink: { primary: '330 81% 42%', primaryLight: '330 81% 60%' },
+      };
+      const a = accents[savedAccent];
+      if (a) {
+        document.documentElement.style.setProperty('--primary', a.primary);
+        document.documentElement.style.setProperty('--primary-light', a.primaryLight);
+      }
+    }
+
     async function init() {
       await seedDefaultCategories();
       await seedDemoData();

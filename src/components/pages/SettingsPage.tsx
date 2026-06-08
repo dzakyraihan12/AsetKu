@@ -18,6 +18,30 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.2 } },
 };
 
+const ACCENT_COLORS: Record<string, { primary: string; primaryLight: string; gradient: string }> = {
+  blue: { primary: '201 75% 33%', primaryLight: '197 78% 51%', gradient: 'linear-gradient(98deg, #135581 2%, #24AAE1 100%)' },
+  purple: { primary: '263 70% 50%', primaryLight: '258 90% 66%', gradient: 'linear-gradient(98deg, #6D28D9 2%, #8B5CF6 100%)' },
+  green: { primary: '162 83% 24%', primaryLight: '160 64% 48%', gradient: 'linear-gradient(98deg, #047857 2%, #10B981 100%)' },
+  orange: { primary: '21 90% 40%', primaryLight: '25 95% 53%', gradient: 'linear-gradient(98deg, #C2410C 2%, #F97316 100%)' },
+  pink: { primary: '330 81% 42%', primaryLight: '330 81% 60%', gradient: 'linear-gradient(98deg, #BE185D 2%, #EC4899 100%)' },
+};
+
+function applyAccentColor(id: string) {
+  const accent = ACCENT_COLORS[id];
+  if (!accent) return;
+  const root = document.documentElement;
+  root.style.setProperty('--primary', accent.primary);
+  root.style.setProperty('--primary-light', accent.primaryLight);
+  // Update gradient buttons
+  const style = document.getElementById('accent-style') || (() => {
+    const el = document.createElement('style');
+    el.id = 'accent-style';
+    document.head.appendChild(el);
+    return el;
+  })();
+  style.textContent = `.btn-gradient { background: ${accent.gradient} !important; } .hero-gradient { background: linear-gradient(145deg, ${accent.gradient.includes('#6D28D9') ? '#3b1578, #6D28D9, #8B5CF6, #A78BFA' : accent.gradient.includes('#047857') ? '#022c22, #047857, #059669, #10B981' : accent.gradient.includes('#C2410C') ? '#431407, #C2410C, #EA580C, #F97316' : accent.gradient.includes('#BE185D') ? '#500724, #BE185D, #DB2777, #EC4899' : '#0d3553, #135581, #1a7bb5, #24AAE1'}) !important; } :is(.dark .hero-gradient) { background: linear-gradient(145deg, ${accent.gradient.includes('#6D28D9') ? '#1e0a3e, #4c1d95, #6D28D9, #7C3AED' : accent.gradient.includes('#047857') ? '#022c22, #064e3b, #047857, #059669' : accent.gradient.includes('#C2410C') ? '#431407, #7c2d12, #C2410C, #EA580C' : accent.gradient.includes('#BE185D') ? '#500724, #831843, #BE185D, #DB2777' : '#071d2e, #0e3a58, #125a82, #1882b5'}) !important; }`;
+}
+
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -178,6 +202,36 @@ export function SettingsPage() {
               {label}
             </button>
           ))}
+        </div>
+      </motion.section>
+
+      {/* Accent Color */}
+      <motion.section variants={fadeUp} className="px-3 pb-3">
+        <span className="text-micro font-bold text-foreground/60 uppercase tracking-wider">Warna Aksen</span>
+        <div className="mt-1.5 flex gap-2">
+          {[
+            { id: 'blue', color: '#135581', light: '#24AAE1', label: 'Blue' },
+            { id: 'purple', color: '#6D28D9', light: '#8B5CF6', label: 'Purple' },
+            { id: 'green', color: '#047857', light: '#10B981', label: 'Green' },
+            { id: 'orange', color: '#C2410C', light: '#F97316', label: 'Orange' },
+            { id: 'pink', color: '#BE185D', light: '#EC4899', label: 'Pink' },
+          ].map((accent) => {
+            const current = typeof window !== 'undefined' ? localStorage.getItem('asetku_accent') || 'blue' : 'blue';
+            return (
+              <button
+                key={accent.id}
+                onClick={() => {
+                  localStorage.setItem('asetku_accent', accent.id);
+                  applyAccentColor(accent.id);
+                  toast(`Warna aksen: ${accent.label}`);
+                }}
+                className={`flex-1 h-10 rounded-xl border-2 transition-all press-scale ${
+                  current === accent.id ? 'border-foreground/30 scale-110 shadow-md' : 'border-border/20'
+                }`}
+                style={{ background: `linear-gradient(135deg, ${accent.color}, ${accent.light})` }}
+              />
+            );
+          })}
         </div>
       </motion.section>
 
