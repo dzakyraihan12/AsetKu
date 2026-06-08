@@ -186,6 +186,22 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
     return count;
   }, [transactions]);
 
+  // Smart spending alert — detect unusually large subtract in last 24h
+  const spendingAlert = useMemo(() => {
+    const subtractTxs = transactions.filter(t => t.type === 'subtract');
+    if (subtractTxs.length < 3) return null;
+    const avg = subtractTxs.reduce((s, t) => s + t.amount, 0) / subtractTxs.length;
+    const recent = [...subtractTxs].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (!recent) return null;
+    const hoursSince = (Date.now() - new Date(recent.createdAt).getTime()) / (1000 * 60 * 60);
+    if (hoursSince > 24) return null;
+    if (recent.amount > avg * 2) {
+      const asset = assets.find(a => a.id === recent.assetId);
+      return { amount: recent.amount, assetName: asset?.name ?? 'Aset' };
+    }
+    return null;
+  }, [transactions, assets]);
+
   // Achievement badges
   const achievements = useMemo(() => {
     const badges: { id: string; emoji: string; label: string; earned: boolean }[] = [
@@ -231,7 +247,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             {hideBalance ? <EyeOff className="h-3.5 w-3.5 text-white/40" /> : <Eye className="h-3.5 w-3.5 text-white/40" />}
           </button>
         </div>
-        <p className="text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none">
+        <p className={`text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none ${periodChange > 0 ? 'wealth-glow' : ''}`}>
           {hideBalance ? '••••••••' : formatCurrency(animatedTotal)}
         </p>
         <div className="flex items-center gap-2 mt-1.5">
@@ -311,6 +327,21 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
           </button>
         </div>
       </motion.section>
+
+      {/* Smart Spending Alert */}
+      {spendingAlert && (
+        <motion.section variants={fadeUp} className="px-3 mt-2">
+          <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+            <span className="text-[16px]">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Pengeluaran besar terdeteksi</p>
+              <p className="text-[9px] text-muted-foreground/50 mt-0.5 truncate">
+                {formatCompact(spendingAlert.amount)} dari {spendingAlert.assetName} — lebih dari 2x rata-rata
+              </p>
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Streak Counter & Achievements */}
       {(streak > 1 || achievements.some(a => a.earned)) && (

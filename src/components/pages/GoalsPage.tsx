@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap, Star } from 'lucide-react';
+import { Plus, Target, MoreHorizontal, Edit2, Trash2, Trophy, Calendar, Zap, Star, Calculator } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
-import { formatCompact, calculateProgress, cn } from '@/lib/utils';
+import { formatCompact, formatCurrency, calculateProgress, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { CircularProgress } from '@/components/ui/Progress';
 import { GoalFormModal } from '@/components/shared/GoalFormModal';
@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Confetti } from '@/components/shared/Confetti';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { useToast } from '@/components/ui/Toast';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { differenceInMonths, addMonths, format, differenceInDays } from 'date-fns';
 
 const fadeUp = {
@@ -26,6 +27,9 @@ export function GoalsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [simAmount, setSimAmount] = useState(0);
+  const [simGoalId, setSimGoalId] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   const totalValue = getTotalValue();
@@ -206,12 +210,17 @@ export function GoalsPage() {
                   <div className="p-3.5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <CircularProgress
-                          value={progress}
-                          size={44}
-                          strokeWidth={4}
-                          color={isComplete ? '#10B981' : undefined}
-                        />
+                        <div className="relative">
+                          {goal.emoji && (
+                            <span className="absolute -top-1 -left-1 text-[10px]">{goal.emoji}</span>
+                          )}
+                          <CircularProgress
+                            value={progress}
+                            size={44}
+                            strokeWidth={4}
+                            color={isComplete ? '#10B981' : undefined}
+                          />
+                        </div>
                         <div>
                           <h3 className="text-[13px] font-bold">{goal.name}</h3>
                           <p className="text-[10px] text-muted-foreground/40 mt-0.5 flex items-center gap-1">
@@ -366,6 +375,26 @@ export function GoalsPage() {
                         </span>
                       </div>
                     )}
+
+                    {/* Next milestone */}
+                    {!isComplete && (() => {
+                      const milestones = [25, 50, 75];
+                      const nextMilestone = milestones.find(m => progress < m);
+                      if (!nextMilestone) return null;
+                      const milestoneValue = Math.round(goal.targetAmount * nextMilestone / 100);
+                      const milestoneRemaining = milestoneValue - current;
+                      if (milestoneRemaining <= 0) return null;
+                      return (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="chip bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                            <Trophy className="h-2.5 w-2.5" /> Milestone
+                          </div>
+                          <span className="text-[10px] text-muted-foreground/60">
+                            {formatCompact(milestoneValue)} ({nextMilestone}%) — kurang <span className="font-bold text-foreground">{formatCompact(milestoneRemaining)}</span>
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </motion.div>
@@ -375,6 +404,92 @@ export function GoalsPage() {
       )}
 
       <GoalFormModal open={showForm} onClose={() => setShowForm(false)} editId={editId} />
+
+      {/* What-if Simulator */}
+      {goals.length > 0 && !showSimulator && (
+        <div className="px-3 pb-4">
+          <button
+            onClick={() => setShowSimulator(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-surface border border-border/20 shadow-card text-[11px] font-bold text-primary/70 press-scale"
+          >
+            <Calculator className="h-3.5 w-3.5" /> What-if Simulator
+          </button>
+        </div>
+      )}
+
+      {showSimulator && goals.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-3 pb-4"
+        >
+          <div className="card-elevated p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="h-3.5 w-3.5 text-primary/60" />
+                <span className="text-[12px] font-bold">What-if Simulator</span>
+              </div>
+              <button onClick={() => setShowSimulator(false)} className="text-[9px] text-muted-foreground/40 font-medium press-scale">Tutup</button>
+            </div>
+            <p className="text-[10px] text-muted-foreground/50">Kalau kamu nabung X per bulan, kapan target tercapai?</p>
+
+            {/* Goal selector */}
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground/50 uppercase">Pilih Target</label>
+              <div className="flex gap-1.5 mt-1 overflow-x-auto no-scrollbar">
+                {goals.map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => setSimGoalId(g.id)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
+                      simGoalId === g.id ? 'btn-gradient text-white' : 'bg-surface-secondary border border-border/30 text-muted-foreground/60'
+                    }`}
+                  >
+                    {g.emoji || '🎯'} {g.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <CurrencyInput
+              label="Nabung per bulan"
+              placeholder="5.000.000"
+              value={simAmount}
+              onChange={setSimAmount}
+            />
+            {simAmount > 0 && simGoalId && (() => {
+              const selectedGoal = goals.find(g => g.id === simGoalId);
+              if (!selectedGoal) return null;
+              const goalCurrent = selectedGoal.customGroupId ? getGroupTotal(selectedGoal.customGroupId) : totalValue;
+              const remaining = Math.max(selectedGoal.targetAmount - goalCurrent, 0);
+              if (remaining <= 0) return <p className="text-[11px] text-success font-bold">🎉 Target sudah tercapai!</p>;
+              const monthsNeeded = Math.ceil(remaining / simAmount);
+              if (!isFinite(monthsNeeded) || monthsNeeded > 1200) return <p className="text-[11px] text-muted-foreground/50">Nominal terlalu kecil untuk kalkulasi</p>;
+              const targetDate = addMonths(new Date(), monthsNeeded);
+              return (
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground/50">Target: {selectedGoal.emoji || '🎯'} {selectedGoal.name}</span>
+                    <span className="text-[10px] font-bold text-primary number-display">{formatCompact(selectedGoal.targetAmount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground/50">Waktu dibutuhkan</span>
+                    <span className="text-[11px] font-bold">{monthsNeeded} bulan</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground/50">Tercapai sekitar</span>
+                    <span className="text-[11px] font-bold text-success">{format(targetDate, 'MMM yyyy')}</span>
+                  </div>
+                </div>
+              );
+            })()}
+            {simAmount > 0 && !simGoalId && (
+              <p className="text-[10px] text-muted-foreground/40 text-center py-2">Pilih target di atas dulu</p>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       <ConfirmDialog
         open={!!confirmDeleteId}
         title="Hapus Target?"

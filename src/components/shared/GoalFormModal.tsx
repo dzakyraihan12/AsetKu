@@ -12,6 +12,8 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 
+const GOAL_EMOJIS = ['🎯', '🏠', '🚗', '💰', '🎓', '✈️', '💍', '📱', '🏖️', '🔥', '⭐', '🚀'];
+
 const schema = z.object({
   name: z.string().min(1, 'Nama target wajib diisi'),
   targetAmount: z.number().min(1, 'Target minimal 1'),
@@ -31,6 +33,7 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
   const { goals, customGroups, addGoal, updateGoal } = useStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emoji, setEmoji] = useState('🎯');
   const editing = editId ? goals.find((g) => g.id === editId) : null;
 
   const { control, register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
@@ -41,8 +44,10 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
   useEffect(() => {
     if (editing) {
       reset({ name: editing.name, targetAmount: editing.targetAmount, targetDate: editing.targetDate, customGroupId: editing.customGroupId || '' });
+      setEmoji(editing.emoji || '🎯');
     } else {
       reset({ name: '', targetAmount: 0, targetDate: '', customGroupId: '' });
+      setEmoji('🎯');
     }
   }, [editing, open, reset]);
 
@@ -50,7 +55,7 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const payload = { ...data, customGroupId: data.customGroupId || undefined };
+      const payload = { ...data, customGroupId: data.customGroupId || undefined, emoji };
       if (editing) {
         await updateGoal(editing.id, payload);
         toast('Target berhasil diperbarui');
@@ -67,6 +72,25 @@ export function GoalFormModal({ open, onClose, editId }: Props) {
   return (
     <Modal open={open} onClose={onClose} title={editing ? 'Edit Target' : 'Buat Target'}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Emoji picker */}
+        <div>
+          <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide">Emoji</label>
+          <div className="flex flex-wrap gap-2 mt-1.5">
+            {GOAL_EMOJIS.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => setEmoji(e)}
+                className={`h-9 w-9 rounded-xl flex items-center justify-center text-[18px] transition-all border-2 ${
+                  emoji === e ? 'border-primary bg-primary/8 scale-110' : 'border-border/20 bg-surface-secondary/50'
+                }`}
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Input label="Nama Target" placeholder="Contoh: Target 2025" {...register('name')} error={errors.name?.message} />
         <Controller
           name="targetAmount"

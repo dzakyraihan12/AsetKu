@@ -40,6 +40,7 @@ export interface Goal {
   targetDate: string;
   categoryId?: string;
   customGroupId?: string;
+  emoji?: string;
   createdAt: string;
 }
 

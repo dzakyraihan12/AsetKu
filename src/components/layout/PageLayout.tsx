@@ -4,18 +4,15 @@ import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
 
 interface PageLayoutProps {
-  /** Unique key for the current page (used for animation) */
   pageKey: string;
-  /** Content rendered inside the sticky gradient header */
   headerContent: ReactNode;
-  /** Scrollable body content below the header */
   children: ReactNode;
 }
 
 export function PageLayout({ pageKey, headerContent, children }: PageLayoutProps) {
   return (
     <div className="max-w-lg mx-auto">
-      {/* Sticky gradient header — gradient is always visible, header content fades */}
+      {/* Sticky gradient header */}
       <div className="sticky top-0 z-20">
         <div className="hero-gradient rounded-b-[24px] wealth-card overflow-hidden">
           <motion.div
@@ -30,7 +27,7 @@ export function PageLayout({ pageKey, headerContent, children }: PageLayoutProps
         </div>
       </div>
 
-      {/* Content area with slide-up entrance */}
+      {/* Content area */}
       <motion.div
         key={`content-${pageKey}`}
         initial={{ opacity: 0, y: 10 }}

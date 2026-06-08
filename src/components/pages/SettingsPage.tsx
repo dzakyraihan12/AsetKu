@@ -31,6 +31,7 @@ export function SettingsPage() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showResetFinal, setShowResetFinal] = useState(false);
+  const [deleteCatId, setDeleteCatId] = useState<string | null>(null);
 
   const userName = typeof window !== 'undefined' ? localStorage.getItem('asetku_user_name') || '' : '';
   const userAvatar = typeof window !== 'undefined' ? localStorage.getItem('asetku_user_avatar') || '' : '';
@@ -225,7 +226,7 @@ export function SettingsPage() {
                   <button onClick={() => { setEditCatId(cat.id); setEditCatName(cat.name); }} className="p-1.5 rounded-md hover:bg-surface-secondary active:scale-95 transition-all">
                     <Edit2 className="h-3 w-3 text-muted-foreground/50" />
                   </button>
-                  <button onClick={() => deleteCategory(cat.id)} className="p-1.5 rounded-md hover:bg-destructive-soft active:scale-95 transition-all">
+                  <button onClick={() => setDeleteCatId(cat.id)} className="p-1.5 rounded-md hover:bg-destructive-soft active:scale-95 transition-all">
                     <Trash2 className="h-3 w-3 text-destructive/50" />
                   </button>
                 </div>
@@ -385,6 +386,14 @@ export function SettingsPage() {
         message="BENAR-BENAR yakin? Ketuk 'Hapus' untuk menghapus SEMUA data secara permanen."
         onConfirm={handleReset}
         onCancel={() => setShowResetFinal(false)}
+      />
+      {/* Category delete with affected assets info */}
+      <ConfirmDialog
+        open={!!deleteCatId}
+        title="Hapus Kategori?"
+        message={`${assets.filter(a => a.categoryId === deleteCatId).length} aset menggunakan kategori ini. Aset tidak akan terhapus, tapi kategorinya akan hilang.`}
+        onConfirm={async () => { if (deleteCatId) { await deleteCategory(deleteCatId); setDeleteCatId(null); toast('Kategori dihapus', 'info'); } }}
+        onCancel={() => setDeleteCatId(null)}
       />
     </motion.div>
     </PageLayout>

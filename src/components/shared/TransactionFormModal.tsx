@@ -114,7 +114,9 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
           <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border ${
             type === 'add'
               ? 'bg-success/5 border-success/15'
-              : 'bg-destructive/5 border-destructive/15'
+              : previewValue < 0
+                ? 'bg-destructive/5 border-destructive/30'
+                : 'bg-destructive/5 border-destructive/15'
           }`}>
             <span className="text-[10px] text-muted-foreground/50 font-medium">Nilai setelah transaksi</span>
             <span className={`text-[13px] font-bold number-display ${
@@ -122,6 +124,14 @@ export function TransactionFormModal({ open, onClose, assetId, type }: Props) {
             }`}>
               {formatCurrency(Math.max(previewValue, 0))}
             </span>
+          </div>
+        )}
+
+        {/* Subtract warning — value will go negative */}
+        {type === 'subtract' && watchedAmount > 0 && previewValue < 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-destructive/8 border border-destructive/20">
+            <span className="text-[12px]">⚠️</span>
+            <span className="text-[10px] font-medium text-destructive">Nominal melebihi saldo aset. Nilai akan menjadi negatif.</span>
           </div>
         )}
 

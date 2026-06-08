@@ -81,9 +81,30 @@ export function AssetsPage() {
 
   const handleSwipeDelete = async () => {
     if (!confirmDeleteId) return;
+    const assetToDelete = assets.find(a => a.id === confirmDeleteId);
+    const assetTxs = transactions.filter(t => t.assetId === confirmDeleteId);
+    
+    // Soft delete — remove immediately from UI
     await deleteAsset(confirmDeleteId);
     setConfirmDeleteId(null);
-    toast('Aset berhasil dihapus', 'info');
+    
+    // Undo toast with restore capability
+    toast('Aset berhasil dihapus', 'info', {
+      label: 'Undo',
+      onClick: async () => {
+        // Restore asset and its transactions
+        if (assetToDelete) {
+          const { addAsset, addTransaction: addTx } = useStore.getState();
+          // Re-add asset via db directly for restore
+          const { db } = await import('@/db');
+          await db.assets.add(assetToDelete);
+          for (const tx of assetTxs) {
+            await db.transactions.add(tx);
+          }
+          await useStore.getState().loadAll();
+        }
+      }
+    });
   };
 
   const headerContent = (

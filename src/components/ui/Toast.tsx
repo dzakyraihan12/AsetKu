@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, Undo2 } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -10,10 +10,11 @@ interface Toast {
   id: number;
   message: string;
   type: ToastType;
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastContextType {
-  toast: (message: string, type?: ToastType) => void;
+  toast: (message: string, type?: ToastType, action?: { label: string; onClick: () => void }) => void;
 }
 
 const ToastContext = createContext<ToastContextType>({ toast: () => {} });
@@ -26,20 +27,29 @@ let toastId = 0;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timersRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
 
-  const toast = useCallback((message: string, type: ToastType = 'success') => {
+  const toast = useCallback((message: string, type: ToastType = 'success', action?: { label: string; onClick: () => void }) => {
     const id = ++toastId;
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
+    setToasts((prev) => [...prev, { id, message, type, action }]);
+    const duration = action ? 5000 : 2500;
+    const timer = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 2500);
+      timersRef.current.delete(id);
+    }, duration);
+    timersRef.current.set(id, timer);
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+    const timer = timersRef.current.get(id);
+    if (timer) { clearTimeout(timer); timersRef.current.delete(id); }
   }, []);
 
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      {/* Toast container */}
-      <div className="fixed bottom-[82px] left-0 right-0 z-[200] flex flex-col items-center gap-2 pointer-events-none">
+      <div className="fixed bottom-[82px] left-0 right-0 z-[200] flex flex-col items-center gap-2 pointer-events-none px-4">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
@@ -58,6 +68,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               {t.type === 'error' && <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />}
               {t.type === 'info' && <Info className="h-4 w-4 text-primary shrink-0" />}
               <span className="text-[12px] font-semibold text-foreground">{t.message}</span>
+              {t.action && (
+                <button
+                  onClick={() => { t.action!.onClick(); dismissToast(t.id); }}
+                  className="ml-1 flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary press-scale"
+                >
+                  <Undo2 className="h-3 w-3" /> {t.action.label}
+                </button>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
