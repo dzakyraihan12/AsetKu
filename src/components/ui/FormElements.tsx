@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { forwardRef, useState } from 'react';
-import { ChevronDown, Check, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 
 // ─── Input ────────────────────────────────────────────────────────────────────
@@ -13,53 +13,24 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, type, ...props }, ref) => {
-    // Date input with shadcn styling
-    if (type === 'date') {
-      return (
-        <div className="space-y-1.5">
-          {label && <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide">{label}</label>}
-          <div className="relative">
-            <input
-              ref={ref}
-              type="date"
-              className={cn(
-                'flex h-11 w-full rounded-xl bg-surface-secondary px-4 pr-10 text-[13px] font-medium',
-                'transition-all border border-border/40 shadow-sm',
-                'placeholder:text-muted-foreground/30',
-                'focus:outline-none focus:bg-surface focus:border-primary/50 focus:ring-2 focus:ring-primary/10 focus:shadow-md',
-                error && 'border-destructive/40 focus:border-destructive/40 focus:ring-destructive/10',
-                className
-              )}
-              {...props}
-            />
-            <CalendarIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
-          </div>
-          {error && <p className="text-[10px] text-destructive font-medium mt-1">{error}</p>}
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-1.5">
-        {label && <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide">{label}</label>}
-        <input
-          ref={ref}
-          type={type}
-          className={cn(
-            'flex h-11 w-full rounded-xl bg-surface-secondary px-4 text-[13px] font-medium',
-            'transition-all border border-border/40 shadow-sm',
-            'placeholder:text-muted-foreground/30',
-            'focus:outline-none focus:bg-surface focus:border-primary/50 focus:ring-2 focus:ring-primary/10 focus:shadow-md',
-            error && 'border-destructive/40 focus:border-destructive/40 focus:ring-destructive/10',
-            className
-          )}
-          {...props}
-        />
-        {error && <p className="text-[10px] text-destructive font-medium mt-1">{error}</p>}
-      </div>
-    );
-  }
+  ({ className, label, error, ...props }, ref) => (
+    <div className="space-y-1.5">
+      {label && <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide">{label}</label>}
+      <input
+        ref={ref}
+        className={cn(
+          'flex h-11 w-full rounded-2xl bg-surface-secondary px-4 text-[13px] font-medium',
+          'transition-all border border-border/30',
+          'placeholder:text-muted-foreground/30',
+          'focus:outline-none focus:bg-surface focus:border-primary/40 focus:ring-2 focus:ring-primary/10 focus:shadow-sm',
+          error && 'border-destructive/40 focus:border-destructive/40 focus:ring-destructive/10',
+          className
+        )}
+        {...props}
+      />
+      {error && <p className="text-[10px] text-destructive font-medium">{error}</p>}
+    </div>
+  )
 );
 Input.displayName = 'Input';
 
