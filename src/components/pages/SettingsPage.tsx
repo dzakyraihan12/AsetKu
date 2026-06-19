@@ -147,6 +147,8 @@ export function SettingsPage() {
       transactions: await db.transactions.toArray(),
       customGroups: await db.customGroups.toArray(),
       goals: await db.goals.toArray(),
+      debts: await db.debts.toArray(),
+      debtPayments: await db.debtPayments.toArray(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -173,11 +175,15 @@ export function SettingsPage() {
         await db.transactions.clear();
         await db.customGroups.clear();
         await db.goals.clear();
+        await db.debts.clear();
+        await db.debtPayments.clear();
         if (data.assets) await db.assets.bulkAdd(data.assets);
         if (data.categories) await db.categories.bulkAdd(data.categories);
         if (data.transactions) await db.transactions.bulkAdd(data.transactions);
         if (data.customGroups) await db.customGroups.bulkAdd(data.customGroups);
         if (data.goals) await db.goals.bulkAdd(data.goals);
+        if (data.debts) await db.debts.bulkAdd(data.debts);
+        if (data.debtPayments) await db.debtPayments.bulkAdd(data.debtPayments);
         await loadAll();
         toast('Data berhasil dipulihkan');
       } catch {
@@ -193,6 +199,8 @@ export function SettingsPage() {
     await db.transactions.clear();
     await db.customGroups.clear();
     await db.goals.clear();
+    await db.debts.clear();
+    await db.debtPayments.clear();
     localStorage.removeItem('asetku_user_name');
     localStorage.removeItem('asetku_user_avatar');
     localStorage.removeItem('asetku_primary_goal');
