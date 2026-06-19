@@ -19,9 +19,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         className={cn(
-          'flex h-11 w-full rounded-2xl bg-surface-secondary px-4 text-[13px] font-medium',
+          'flex h-9 w-full rounded-2xl bg-surface-secondary px-3.5 text-[11px] font-medium',
           'transition-all border border-border/30',
-          'placeholder:text-muted-foreground/30',
+          'placeholder:text-muted-foreground/25 placeholder:text-[11px]',
           'focus:outline-none focus:bg-surface focus:border-primary/40 focus:ring-2 focus:ring-primary/10 focus:shadow-sm',
           error && 'border-destructive/40 focus:border-destructive/40 focus:ring-destructive/10',
           className
@@ -132,7 +132,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         ref={ref}
         className={cn(
-          'flex min-h-[80px] w-full rounded-xl bg-surface-secondary px-4 py-3 text-[13px] font-medium resize-none',
+          'flex min-h-[64px] w-full rounded-xl bg-surface-secondary px-3.5 py-2.5 text-[11px] font-medium resize-none',
           'transition-all border border-border/40 shadow-sm',
           'placeholder:text-muted-foreground/30',
           'focus:outline-none focus:bg-surface focus:border-primary/50 focus:ring-2 focus:ring-primary/10 focus:shadow-md',

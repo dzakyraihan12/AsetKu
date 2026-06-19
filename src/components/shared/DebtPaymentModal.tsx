@@ -200,12 +200,12 @@ export function DebtPaymentModal({ open, onClose }: DebtPaymentModalProps) {
               <div>
                 <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide block mb-1.5">Tanggal</label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30" />
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                    className="w-full pl-9 pr-3.5 h-9 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                     disabled={loading}
                   />
                 </div>
@@ -220,7 +220,7 @@ export function DebtPaymentModal({ open, onClose }: DebtPaymentModalProps) {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Transfer via BCA..."
-                  className="w-full px-3 py-3 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all resize-none h-14"
+                  className="w-full px-3.5 py-2 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all resize-none h-12"
                   disabled={loading}
                 />
               </div>

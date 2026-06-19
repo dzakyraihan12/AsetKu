@@ -132,13 +132,13 @@ export function DebtFormModal({ open, onClose, editDebt = null }: DebtFormModalP
             Nama Hutang
           </label>
           <div className="relative">
-            <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
+            <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30" />
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="KPR Rumah, Kredit Mobil, dll"
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              className="w-full pl-9 pr-3.5 h-9 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
               disabled={loading}
             />
           </div>
@@ -166,14 +166,14 @@ export function DebtFormModal({ open, onClose, editDebt = null }: DebtFormModalP
             Sisa Tenor (Bulan)
           </label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30" />
             <input
               type="number"
               value={formData.remainingMonths || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, remainingMonths: parseInt(e.target.value) || 0 }))}
               placeholder="24"
               min="0"
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              className="w-full pl-9 pr-3.5 h-9 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
               disabled={loading}
             />
           </div>
@@ -185,7 +185,7 @@ export function DebtFormModal({ open, onClose, editDebt = null }: DebtFormModalP
             Bunga per Tahun <span className="text-muted-foreground/30">(opsional)</span>
           </label>
           <div className="relative">
-            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
+            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30" />
             <input
               type="number"
               step="0.1"
@@ -194,7 +194,7 @@ export function DebtFormModal({ open, onClose, editDebt = null }: DebtFormModalP
               placeholder="5.5"
               min="0"
               max="100"
-              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              className="w-full pl-9 pr-3.5 h-9 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
               disabled={loading}
             />
           </div>
@@ -209,7 +209,7 @@ export function DebtFormModal({ open, onClose, editDebt = null }: DebtFormModalP
             value={formData.notes}
             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
             placeholder="Bank BCA, bunga tetap, jatuh tempo 2026..."
-            className="w-full px-3 py-3 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all resize-none h-16"
+            className="w-full px-3.5 py-2 rounded-2xl border border-border/30 bg-surface-secondary/30 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all resize-none h-14"
             disabled={loading}
           />
         </div>

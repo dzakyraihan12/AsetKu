@@ -324,14 +324,8 @@ input[type="date"]::-webkit-date-and-time-value {
   text-align: left;
 }
 
-/* iOS PWA: prevent auto-zoom on input focus (font-size must be >= 16px on iOS) */
-@media screen and (max-width: 768px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-}
+/* iOS PWA: prevent auto-zoom on input focus via viewport meta (handled in layout.tsx) */
+/* We no longer force font-size 16px on inputs — instead we set maximum-scale=1 in viewport meta */
 
 /* iOS PWA: use --vh-fix CSS variable set by JS for correct viewport height after keyboard dismiss */
 .ios-vh-fix {

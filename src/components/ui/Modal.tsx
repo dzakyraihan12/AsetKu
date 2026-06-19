@@ -73,7 +73,7 @@ export function Modal({ open, onClose, title, children, preventClose }: ModalPro
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3">
-              <h2 className="text-[15px] font-bold tracking-tight">{title}</h2>
+              <h2 className="text-[13px] font-bold tracking-tight">{title}</h2>
               <button
                 onClick={attemptClose}
                 className="h-8 w-8 rounded-full bg-surface-secondary flex items-center justify-center transition-all hover:bg-surface-tertiary active:scale-90 border border-border/20"

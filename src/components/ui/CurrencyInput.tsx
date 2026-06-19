@@ -39,7 +39,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
       <div className="space-y-1.5">
         {label && <label className="text-[11px] font-bold text-foreground/60 uppercase tracking-wide">{label}</label>}
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-muted-foreground/50">Rp</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-muted-foreground/50">Rp</span>
           <input
             ref={ref}
             type="text"
@@ -48,7 +48,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
             onChange={handleChange}
             placeholder={placeholder}
             className={cn(
-              'flex h-11 w-full rounded-2xl bg-surface-secondary pl-10 pr-4 text-[13px] font-medium',
+              'flex h-9 w-full rounded-2xl bg-surface-secondary pl-9 pr-3.5 text-[11px] font-medium',
               'transition-all border border-border/30',
               'placeholder:text-muted-foreground/30',
               'focus:outline-none focus:bg-surface focus:border-primary/40 focus:ring-2 focus:ring-primary/10 focus:shadow-sm',

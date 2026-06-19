@@ -294,20 +294,20 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
 
       <div className="mt-5">
         <div className="flex items-center gap-2">
-          <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Kekayaan Bersih</p>
+          <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Aset</p>
           <button onClick={toggleHideBalance} className="p-1 rounded-full hover:bg-white/10 transition-colors">
             {hideBalance ? <EyeOff className="h-3.5 w-3.5 text-white/40" /> : <Eye className="h-3.5 w-3.5 text-white/40" />}
           </button>
         </div>
-        <p className={`text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none ${periodChange > 0 ? 'wealth-glow' : ''} ${netWorth < 0 ? 'text-red-200' : ''}`}>
-          {hideBalance ? '••••••••' : formatCurrency(animatedNetWorth)}
+        <p className={`text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none ${periodChange > 0 ? 'wealth-glow' : ''}`}>
+          {hideBalance ? '••••••••' : formatCurrency(animatedAssets)}
         </p>
-        {/* Net Worth breakdown: Assets vs Debts */}
+        {/* Breakdown: Net Worth & Hutang */}
         <div className="flex items-center gap-2 mt-2">
           <div className="flex items-center gap-1">
-            <span className="text-[9px] text-emerald-300/60 font-bold uppercase">Aset</span>
-            <span className="text-[10px] font-bold text-emerald-300 number-display">
-              {hideBalance ? '•••' : formatCompact(animatedAssets)}
+            <span className="text-[9px] text-white/40 font-bold uppercase">Bersih</span>
+            <span className={`text-[10px] font-bold number-display ${netWorth < 0 ? 'text-red-300' : 'text-emerald-300'}`}>
+              {hideBalance ? '•••' : formatCompact(animatedNetWorth)}
             </span>
           </div>
           {totalDebtBalance > 0 && (
@@ -875,7 +875,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       <button
         onClick={() => setShowStatistics(true)}
         className="fixed right-4 z-20 h-10 w-10 rounded-full btn-gradient shadow-lg shadow-sky-900/25 flex items-center justify-center press-scale"
-        style={{ bottom: '80px' }}
+        style={{ bottom: '100px' }}
       >
         <TrendingUp className="h-4 w-4 text-white" />
       </button>
