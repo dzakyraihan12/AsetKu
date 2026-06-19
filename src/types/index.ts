@@ -9,6 +9,28 @@ export interface Asset {
   updatedAt: string;
 }
 
+export interface Debt {
+  id: string;
+  name: string;
+  totalAmount: number; // Total hutang awal
+  monthlyInstallment: number; // Cicilan per bulan
+  remainingMonths: number; // Sisa tenor dalam bulan
+  interestRate?: number; // Bunga (opsional)
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DebtPayment {
+  id: string;
+  debtId: string;
+  amount: number;
+  type: 'installment' | 'extra'; // Cicilan rutin atau pembayaran tambahan
+  notes: string;
+  date: string;
+  createdAt: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -48,5 +70,8 @@ export interface Snapshot {
   id: string;
   date: string;
   totalValue: number;
+  totalDebt: number;
+  netWorth: number;
   breakdown: Record<string, number>;
 }
+

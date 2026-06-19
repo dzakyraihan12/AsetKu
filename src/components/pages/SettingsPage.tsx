@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Moon, Sun, Monitor, Download, Upload, Plus, Edit2, Trash2, Shield, Settings, AlertTriangle, RotateCcw, User, Palette, FolderOpen, Database, Trophy, ChevronDown } from 'lucide-react';
+import { Moon, Sun, Monitor, Download, Upload, Plus, Edit2, Trash2, Shield, Settings, AlertTriangle, RotateCcw, User, Palette, FolderOpen, Database, Trophy, ChevronDown, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { useStore } from '@/store';
@@ -13,6 +13,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { GroupFormModal } from '@/components/shared/GroupFormModal';
 import { AvatarPicker, getAvatarEmoji } from '@/components/shared/AvatarPicker';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { useNavigate } from '@/hooks/useNavigation';
+import { StatisticsModal } from '@/components/shared/StatisticsModal';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 4 },
@@ -102,6 +104,7 @@ function SettingsSection({ icon: Icon, title, children, defaultOpen = true, vari
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { categories, customGroups, assets, transactions, goals, addCategory, updateCategory, deleteCategory, deleteGroup, loadAll } = useStore();
   const [catName, setCatName] = useState('');
   const [editCatId, setEditCatId] = useState<string | null>(null);
@@ -113,6 +116,7 @@ export function SettingsPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showResetFinal, setShowResetFinal] = useState(false);
   const [deleteCatId, setDeleteCatId] = useState<string | null>(null);
+  const [showStatistics, setShowStatistics] = useState(false);
 
   const userName = typeof window !== 'undefined' ? localStorage.getItem('asetku_user_name') || '' : '';
   const userAvatar = typeof window !== 'undefined' ? localStorage.getItem('asetku_user_avatar') || '' : '';
@@ -400,6 +404,18 @@ export function SettingsPage() {
       <motion.div variants={fadeUp}>
         <SettingsSection icon={Database} title="Backup & Data">
           <div className="space-y-2">
+            <button 
+              onClick={() => setShowStatistics(true)} 
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/10 press-scale text-left"
+            >
+              <div className="h-9 w-9 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
+                <BarChart3 className="h-4 w-4 text-violet-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-semibold">Lihat Statistik</p>
+                <p className="text-[9px] text-muted-foreground/40">Analisis pertumbuhan & distribusi</p>
+              </div>
+            </button>
             <button onClick={handleExport} className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10 press-scale text-left">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <Download className="h-4 w-4 text-primary" />
@@ -525,6 +541,9 @@ export function SettingsPage() {
         onConfirm={async () => { if (deleteCatId) { await deleteCategory(deleteCatId); setDeleteCatId(null); toast('Kategori dihapus', 'info'); } }}
         onCancel={() => setDeleteCatId(null)}
       />
+      
+      {/* Statistics Modal */}
+      <StatisticsModal open={showStatistics} onClose={() => setShowStatistics(false)} />
     </motion.div>
     </PageLayout>
   );

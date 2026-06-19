@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Asset, Category, Transaction, CustomGroup, Goal, Snapshot } from '@/types';
+import type { Asset, Category, Transaction, CustomGroup, Goal, Snapshot, Debt, DebtPayment } from '@/types';
 
 export class AsetKuDB extends Dexie {
   assets!: Table<Asset>;
@@ -8,16 +8,20 @@ export class AsetKuDB extends Dexie {
   customGroups!: Table<CustomGroup>;
   goals!: Table<Goal>;
   snapshots!: Table<Snapshot>;
+  debts!: Table<Debt>;
+  debtPayments!: Table<DebtPayment>;
 
   constructor() {
     super('AsetKuDB');
-    this.version(1).stores({
+    this.version(2).stores({
       assets: 'id, categoryId, name, createdAt',
       categories: 'id, name',
       transactions: 'id, assetId, date, type',
       customGroups: 'id, name',
       goals: 'id, name, targetDate',
       snapshots: 'id, date',
+      debts: 'id, name, createdAt',
+      debtPayments: 'id, debtId, date, type',
     });
   }
 }

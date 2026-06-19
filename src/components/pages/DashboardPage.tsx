@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package, Trophy } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, Target, Eye, EyeOff, Wallet, PieChart, FolderOpen, Activity, Sun, CloudSun, Sunset, Moon, Crosshair, PlusCircle, Receipt, Banknote, Landmark, Lock, Bitcoin, Home, Car, Sparkles, ClipboardList, Package, Trophy, X, AlertTriangle, Lightbulb, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store';
 import { formatCurrency, formatCompact, calculateProgress, formatRelativeDate } from '@/lib/utils';
@@ -18,6 +18,7 @@ import { BatchTransactionModal } from '@/components/shared/BatchTransactionModal
 import { TransactionHistoryModal } from '@/components/shared/TransactionHistoryModal';
 import { SectionSkeleton } from '@/components/ui/Skeleton';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { StatisticsModal } from '@/components/shared/StatisticsModal';
 import type { LucideIcon } from 'lucide-react';
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -32,8 +33,51 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
+// ─── Financial Health Tips ─────────────────────────────────────────────────────
+const HEALTH_TIPS: { keyword: string; tip: string }[] = [
+  { keyword: 'cash', tip: 'Kurangi pengeluaran tunai yang tidak tercatat. Cobalah metode budgeting 50/30/20.' },
+  { keyword: 'bank', tip: 'Pertimbangkan memindahkan sebagian dana ke tabungan berjangka dengan bunga lebih tinggi.' },
+  { keyword: 'saham', tip: 'Penjualan saham dalam jumlah besar sebaiknya dipertimbangkan matang. Jangan panic selling.' },
+  { keyword: 'crypto', tip: 'Volatilitas kripto tinggi. Alokasikan maksimal 5-10% dari total aset untuk crypto.' },
+  { keyword: 'properti', tip: 'Biaya properti besar perlu direncanakan jauh-jauh hari. Pastikan dana darurat tetap aman.' },
+  { keyword: 'default', tip: 'Pertimbangkan untuk membatasi pengeluaran non-primer minggu ini dan alokasikan ke tabungan.' },
+];
+
+function getHealthTip(assetName: string): string {
+  const lower = assetName.toLowerCase();
+  const match = HEALTH_TIPS.find((t) => t.keyword !== 'default' && lower.includes(t.keyword));
+  return match?.tip ?? HEALTH_TIPS.find((t) => t.keyword === 'default')!.tip;
+}
+
+// ─── Donut Ring Comparison ──────────────────────────────────────────────────────
+function DonutRing({ pct }: { pct: number }) {
+  const r = 18;
+  const circ = 2 * Math.PI * r;
+  const filled = Math.min(pct / 100, 1) * circ;
+  return (
+    <svg viewBox="0 0 44 44" className="w-11 h-11">
+      <circle cx="22" cy="22" r={r} fill="none" stroke="rgba(251,146,60,0.15)" strokeWidth="5" />
+      <circle
+        cx="22" cy="22" r={r} fill="none"
+        stroke="#fb923c" strokeWidth="5"
+        strokeDasharray={`${filled} ${circ - filled}`}
+        strokeLinecap="round"
+        strokeDashoffset={circ / 4}
+        style={{ transition: 'stroke-dasharray 0.6s ease' }}
+      />
+      <text x="22" y="26" textAnchor="middle" fontSize="8" fontWeight="700" fill="#fb923c">
+        {Math.round(pct)}%
+      </text>
+    </svg>
+  );
+}
+
 export function DashboardPage({ userName, userAvatar }: { userName: string | null; userAvatar: string | null }) {
-  const { assets, transactions, customGroups, goals, categories, getAssetValue, getTotalValue, getGroupTotal, getCategoryTotal, isLoading } = useStore();
+  const { 
+    assets, transactions, customGroups, goals, categories, 
+    getAssetValue, getTotalAssetValue, getNetWorth, getTotalDebtBalance, getTotalDebtOriginal,
+    getGroupTotal, getCategoryTotal, isLoading 
+  } = useStore();
   const navigate = useNavigate();
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -42,6 +86,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
     return false;
   });
   const [showAssetForm, setShowAssetForm] = useState(false);
+  const [showAssetTypePicker, setShowAssetTypePicker] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [showTxPicker, setShowTxPicker] = useState(false);
   const [showTxTypePicker, setShowTxTypePicker] = useState(false);
@@ -50,7 +95,12 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
   const [showTxForm, setShowTxForm] = useState(false);
   const [showAllTx, setShowAllTx] = useState(false);
   const [showBatchTx, setShowBatchTx] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
   const [changePeriod, setChangePeriod] = useState<'day' | 'week' | 'month'>('month');
+  const [dismissedAlertId, setDismissedAlertId] = useState<string>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('asetku_dismissed_spending_alert') || '';
+    return '';
+  });
 
   const toggleHideBalance = () => {
     const next = !hideBalance;
@@ -58,8 +108,12 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
     localStorage.setItem('asetku_hide_balance', String(next));
   };
 
-  const totalValue = useMemo(() => getTotalValue(), [assets, transactions]);
-  const animatedTotal = useCountUp(totalValue, 900);
+  const totalAssetValue = useMemo(() => getTotalAssetValue(), [assets, transactions]);
+  const totalDebtBalance = useMemo(() => getTotalDebtBalance(), []);
+  const netWorth = useMemo(() => getNetWorth(), [assets, transactions]);
+  const animatedAssets = useCountUp(totalAssetValue, 900);
+  const animatedDebts = useCountUp(totalDebtBalance, 900);
+  const animatedNetWorth = useCountUp(netWorth, 900);
 
   // Primary goal from localStorage preference
   const primaryGoal = useMemo(() => {
@@ -102,10 +156,10 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       .reduce((sum, t) => sum + (t.type === 'add' ? t.amount : -t.amount), 0);
   }, [transactions]);
 
-  const prevTotal = totalValue - periodChange;
+  const prevTotal = totalAssetValue - periodChange;
   const periodPct = prevTotal > 0 ? ((periodChange / prevTotal) * 100).toFixed(1) : '0';
   const periodLabel = changePeriod === 'day' ? 'hari ini' : changePeriod === 'week' ? 'minggu ini' : 'bulan ini';
-  const progress = primaryGoal ? calculateProgress(totalValue, primaryGoal.targetAmount) : 0;
+  const progress = primaryGoal ? calculateProgress(netWorth, primaryGoal.targetAmount) : 0;
 
   const categoryAllocation = useMemo(() => {
     return categories
@@ -195,7 +249,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
     if (hoursSince > 24) return null;
     if (recent.amount > avg * 2) {
       const asset = assets.find(a => a.id === recent.assetId);
-      return { amount: recent.amount, assetName: asset?.name ?? 'Aset' };
+      return { amount: recent.amount, avg, txId: recent.id, assetName: asset?.name ?? 'Aset' };
     }
     return null;
   }, [transactions, assets]);
@@ -240,18 +294,38 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
 
       <div className="mt-5">
         <div className="flex items-center gap-2">
-          <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Total Kekayaan</p>
+          <p className="text-[10px] text-white/35 uppercase tracking-[0.1em] font-bold">Kekayaan Bersih</p>
           <button onClick={toggleHideBalance} className="p-1 rounded-full hover:bg-white/10 transition-colors">
             {hideBalance ? <EyeOff className="h-3.5 w-3.5 text-white/40" /> : <Eye className="h-3.5 w-3.5 text-white/40" />}
           </button>
         </div>
-        <p className={`text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none ${periodChange > 0 ? 'wealth-glow' : ''}`}>
-          {hideBalance ? '••••••••' : formatCurrency(animatedTotal)}
+        <p className={`text-[30px] font-extrabold text-white tracking-[-0.04em] number-display mt-1 leading-none ${periodChange > 0 ? 'wealth-glow' : ''} ${netWorth < 0 ? 'text-red-200' : ''}`}>
+          {hideBalance ? '••••••••' : formatCurrency(animatedNetWorth)}
         </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className={`text-[11px] font-semibold number-display ${periodChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-            {hideBalance ? '•••' : `${periodChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(periodChange))}`}
-          </span>
+        {/* Net Worth breakdown: Assets vs Debts */}
+        <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-emerald-300/60 font-bold uppercase">Aset</span>
+            <span className="text-[10px] font-bold text-emerald-300 number-display">
+              {hideBalance ? '•••' : formatCompact(animatedAssets)}
+            </span>
+          </div>
+          {totalDebtBalance > 0 && (
+            <>
+              <span className="text-white/20 text-[10px]">·</span>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] text-red-300/60 font-bold uppercase">Hutang</span>
+                <span className="text-[10px] font-bold text-red-300 number-display">
+                  {hideBalance ? '•••' : formatCompact(animatedDebts)}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={`text-[11px] font-semibold number-display ${periodChange >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+              {hideBalance ? '•••' : `${periodChange >= 0 ? '↑' : '↓'} ${formatCompact(Math.abs(periodChange))}`}
+            </span>
           {/* Period selector */}
           <div className="flex items-center gap-0.5 bg-white/[0.08] rounded-full p-[2px]">
             {(['day', 'week', 'month'] as const).map((p) => (
@@ -262,7 +336,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
                   changePeriod === p ? 'bg-white/20 text-white' : 'text-white/30'
                 }`}
               >
-                {p === 'day' ? '1H' : p === 'week' ? '1M' : '1B'}
+                {p === 'day' ? '1H' : p === 'week' ? '1Mgg' : '1B'}
               </button>
             ))}
           </div>
@@ -303,11 +377,11 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       <motion.section variants={fadeUp} className="px-4 mt-3">
         <div className="flex gap-2">
           <button
-            onClick={() => setShowAssetForm(true)}
+            onClick={() => setShowAssetTypePicker(true)}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl btn-gradient text-white press-scale shadow-sm shadow-sky-900/15 hover:brightness-110 transition-all"
           >
             <PlusCircle className="h-3.5 w-3.5 text-white/90" />
-            <span className="text-[10px] font-bold text-white/90">Tambah Aset</span>
+            <span className="text-[10px] font-bold text-white/90">Tambah</span>
           </button>
           <button
             onClick={() => setShowTxPicker(true)}
@@ -326,20 +400,57 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
         </div>
       </motion.section>
 
-      {/* Smart Spending Alert */}
-      {spendingAlert && (
-        <motion.section variants={fadeUp} className="px-3 mt-2">
-          <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/15">
-            <span className="text-[16px]">⚠️</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Pengeluaran besar terdeteksi</p>
-              <p className="text-[9px] text-muted-foreground/50 mt-0.5 truncate">
-                {formatCompact(spendingAlert.amount)} dari {spendingAlert.assetName} — lebih dari 2x rata-rata
-              </p>
+      {/* Smart Spending Alert — Interactive & dismissible */}
+      <AnimatePresence>
+      {spendingAlert && spendingAlert.txId !== dismissedAlertId && (
+        <motion.section
+          key="spending-alert"
+          variants={fadeUp}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+          transition={{ duration: 0.3 }}
+          className="px-3 mt-2"
+        >
+          <div className="rounded-2xl bg-amber-500/5 border border-amber-500/20 overflow-hidden">
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-3 pt-3 pb-1">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Pengeluaran Besar Terdeteksi</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDismissedAlertId(spendingAlert.txId);
+                  localStorage.setItem('asetku_dismissed_spending_alert', spendingAlert.txId);
+                }}
+                className="p-1 rounded-full hover:bg-amber-500/15 transition-colors"
+              >
+                <X className="h-3 w-3 text-amber-500/60" />
+              </button>
+            </div>
+            {/* Body with comparison ring */}
+            <div className="flex items-start gap-3 px-3 pb-3">
+              <DonutRing pct={Math.min((spendingAlert.amount / spendingAlert.avg) * 50, 100)} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70 leading-snug">
+                  <span className="font-bold text-amber-700 dark:text-amber-400">{formatCompact(spendingAlert.amount)}</span>
+                  {' '}dari <span className="font-semibold">{spendingAlert.assetName}</span> —
+                  {' '}{(spendingAlert.amount / spendingAlert.avg).toFixed(1)}x lebih besar dari rata-rata ({formatCompact(spendingAlert.avg)})
+                </p>
+                {/* Financial health tip */}
+                <div className="flex items-start gap-1.5 mt-2 p-2 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                  <Lightbulb className="h-3 w-3 text-amber-500/70 mt-0.5 shrink-0" />
+                  <p className="text-[9px] text-amber-700/60 dark:text-amber-400/60 leading-relaxed">
+                    <span className="font-bold">Tips:</span> {getHealthTip(spendingAlert.assetName)}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </motion.section>
       )}
+      </AnimatePresence>
 
       {/* Streak Counter & Achievements */}
       {(streak > 1 || achievements.some(a => a.earned)) && (
@@ -388,7 +499,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             </div>
             <ProgressBar value={progress} size="sm" variant="gradient" />
             <div className="flex justify-between mt-1.5">
-              <span className="text-[9px] text-muted-foreground/40 number-display font-medium">{formatCompact(totalValue)}</span>
+              <span className="text-[9px] text-muted-foreground/40 number-display font-medium">{formatCompact(netWorth)}</span>
               <span className="text-[9px] text-amber-600 dark:text-amber-400 number-display font-bold">{formatCompact(primaryGoal.targetAmount)}</span>
             </div>
           </div>
@@ -405,7 +516,12 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             <TrendingUp className="h-3.5 w-3.5 text-primary/60" />
             <span className="text-[12px] font-bold text-foreground">Pertumbuhan</span>
           </div>
-          <span className="chip-accent"><TrendingUp className="h-2.5 w-2.5" /> 6 bulan</span>
+          <button 
+            onClick={() => setShowStatistics(true)}
+            className="text-[10px] font-bold text-primary press-scale"
+          >
+            Lihat Detail
+          </button>
         </div>
         <div className="card-elevated p-3 pb-1">
           <GrowthChart />
@@ -413,39 +529,39 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       </motion.section>
       )}
 
-      {/* Allocation */}
+      {/* Allocation — compact inline bar only, detail in Assets page */}
       {categoryAllocation.length > 0 && (
-        <motion.section variants={fadeUp} className="mt-4">
-          <div className="px-3 mb-2 flex items-center gap-2">
-            <PieChart className="h-3.5 w-3.5 text-primary/60" />
-            <span className="text-[12px] font-bold text-foreground">Alokasi Aset</span>
-          </div>
-          <div className="px-3 mb-2.5">
-            <div className="h-2.5 rounded-full overflow-hidden flex gap-[1.5px] bg-surface-secondary/80">
-              {categoryAllocation.map((cat, i) => {
-                const pct = (cat.value / totalValue) * 100;
-                const colors = ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'];
-                return (
-                  <motion.div key={cat.id} className="h-full first:rounded-l-full last:rounded-r-full" style={{ backgroundColor: colors[i % colors.length] }} initial={{ flex: 0 }} animate={{ flex: pct }} transition={{ duration: 0.7, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }} />
-                );
-              })}
+        <motion.section variants={fadeUp} className="px-3 mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <PieChart className="h-3.5 w-3.5 text-primary/60" />
+              <span className="text-[12px] font-bold text-foreground">Alokasi Aset</span>
             </div>
+            <button onClick={() => navigate('assets')} className="text-[10px] font-bold text-primary press-scale">Detail</button>
           </div>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar px-3">
+          <div className="h-2.5 rounded-full overflow-hidden flex gap-[1.5px] bg-surface-secondary/80">
             {categoryAllocation.map((cat, i) => {
-              const pct = Math.round((cat.value / totalValue) * 100);
+              const pct = (cat.value / totalAssetValue) * 100;
               const colors = ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'];
               return (
-                <motion.div key={cat.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + i * 0.04 }} className="shrink-0 min-w-[100px] p-3 rounded-2xl bg-surface border border-border/20 shadow-card">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <div className="h-3 w-3 rounded-full shadow-sm" style={{ backgroundColor: colors[i % colors.length] }} />
-                    <p className="text-[10px] text-muted-foreground/60 truncate font-semibold">{cat.name}</p>
-                  </div>
-                  <p className="text-[13px] font-extrabold number-display"><AnimatedNumber value={cat.value} format={formatCompact} /></p>
-                  <p className="text-[10px] text-muted-foreground/30 number-display font-bold mt-0.5">{pct}%</p>
-                </motion.div>
+                <motion.div key={cat.id} className="h-full first:rounded-l-full last:rounded-r-full" style={{ backgroundColor: colors[i % colors.length] }} initial={{ flex: 0 }} animate={{ flex: pct }} transition={{ duration: 0.7, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }} />
               );
             })}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+            {categoryAllocation.slice(0, 4).map((cat, i) => {
+              const pct = Math.round((cat.value / totalAssetValue) * 100);
+              const colors = ['#2563EB', '#0EA5E9', '#10B981', '#EAB308', '#EC4899', '#8B5CF6', '#F97316'];
+              return (
+                <div key={cat.id} className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                  <span className="text-[9px] text-muted-foreground/50 font-medium">{cat.name} {pct}%</span>
+                </div>
+              );
+            })}
+            {categoryAllocation.length > 4 && (
+              <span className="text-[9px] text-muted-foreground/30">+{categoryAllocation.length - 4} lagi</span>
+            )}
           </div>
         </motion.section>
       )}
@@ -464,7 +580,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
             {topAssets.map((asset, idx) => {
               const catName = categories.find(c => c.id === asset.categoryId)?.name ?? '';
               const IconComp = CATEGORY_ICONS[catName] || Package;
-              const pct = totalValue > 0 ? Math.round((asset.value / totalValue) * 100) : 0;
+              const pct = totalAssetValue > 0 ? Math.round((asset.value / totalAssetValue) * 100) : 0;
               return (
                 <motion.div key={asset.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + idx * 0.04 }} className="flex items-center justify-between py-3 px-3.5">
                   <div className="flex items-center gap-3">
@@ -489,33 +605,7 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
         </motion.section>
       )}
 
-      {/* Groups */}
-      {customGroups.length > 0 && (
-        <motion.section variants={fadeUp} className="px-3 mt-4">
-          <div className="flex items-center gap-2 mb-2">
-            <FolderOpen className="h-3.5 w-3.5 text-primary/60" />
-            <span className="text-[12px] font-bold text-foreground">Grup Kustom</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {customGroups.map((group) => {
-              const val = getGroupTotal(group.id);
-              const pct = totalValue > 0 ? Math.round((val / totalValue) * 100) : 0;
-              return (
-                <div key={group.id} className="card-elevated p-3">
-                  <p className="text-[10px] text-muted-foreground/45 truncate font-semibold">{group.name}</p>
-                  <p className="text-[14px] font-extrabold number-display mt-1"><AnimatedNumber value={val} format={formatCompact} /></p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="flex-1 h-1 rounded-full bg-surface-secondary overflow-hidden">
-                      <motion.div className="h-full rounded-full gradient-bg" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} />
-                    </div>
-                    <span className="text-[9px] text-muted-foreground/30 font-bold number-display">{pct}%</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.section>
-      )}
+
 
       {/* Recent Activity — shows both date and notes */}
       {recentTxs.length > 0 && (
@@ -564,10 +654,15 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       {assets.length === 0 && !isLoading && (
         <motion.section variants={fadeUp} className="px-4 mt-4 pb-3">
           <div className="card-elevated p-5 text-center space-y-3">
-            <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} className="text-[36px]">🚀</motion.div>
+            <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} className="text-[36px]">{totalDebtBalance > 0 ? '💳' : '🚀'}</motion.div>
             <div>
-              <p className="text-[14px] font-bold">Selamat datang di AsetKu!</p>
-              <p className="text-[11px] text-muted-foreground/50 mt-1 leading-relaxed">Mulai lacak kekayaanmu dengan menambah aset pertama.</p>
+              <p className="text-[14px] font-bold">{totalDebtBalance > 0 ? 'Mulai Catat Aset' : 'Selamat datang di AsetKu!'}</p>
+              <p className="text-[11px] text-muted-foreground/50 mt-1 leading-relaxed">
+                {totalDebtBalance > 0
+                  ? 'Kamu sudah mencatat hutang. Tambahkan aset untuk melihat kekayaan bersih secara lengkap.'
+                  : 'Mulai lacak kekayaanmu dengan menambah aset pertama.'
+                }
+              </p>
             </div>
             <button onClick={() => setShowAssetForm(true)} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full btn-gold text-[#3d2e00] text-[11px] font-bold shadow-md shadow-amber-500/20 press-scale">
               <Wallet className="h-3.5 w-3.5" /> Tambah Aset Pertama
@@ -581,6 +676,63 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
       <AssetFormModal open={showAssetForm} onClose={() => setShowAssetForm(false)} editId={null} />
       <GoalFormModal open={showGoalForm} onClose={() => setShowGoalForm(false)} editId={null} />
       <BatchTransactionModal open={showBatchTx} onClose={() => setShowBatchTx(false)} />
+
+      {/* Asset Type Picker — Bottom Sheet */}
+      <AnimatePresence>
+        {showAssetTypePicker && (
+          <motion.div
+            key="asset-type-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-end justify-center"
+            onClick={() => setShowAssetTypePicker(false)}
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              className="relative w-full max-w-lg bg-surface rounded-t-3xl p-4 pb-8 safe-bottom border-t border-border/20 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
+              <h3 className="text-[14px] font-bold mb-1">Apa yang ingin ditambahkan?</h3>
+              <p className="text-[11px] text-muted-foreground/40 mb-4">
+                Pilih jenis yang ingin kamu catat
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowAssetTypePicker(false); setShowAssetForm(true); }}
+                  className="flex-1 flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 press-scale active:bg-emerald-500/10 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-2xl btn-gradient flex items-center justify-center">
+                    <Wallet className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[12px] font-bold block">Tambah Aset</span>
+                    <span className="text-[9px] text-muted-foreground/50">Tabungan, investasi, properti</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setShowAssetTypePicker(false); navigate('debts'); }}
+                  className="flex-1 flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-red-500/5 border border-red-500/15 press-scale active:bg-red-500/10 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-sm">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[12px] font-bold block">Tambah Hutang</span>
+                    <span className="text-[9px] text-muted-foreground/50">KPR, kredit, pinjaman</span>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Transaction Asset Picker — Bottom Sheet */}
       <AnimatePresence>
@@ -719,8 +871,20 @@ export function DashboardPage({ userName, userAvatar }: { userName: string | nul
         />
       )}
 
+      {/* Floating Statistics Button */}
+      <button
+        onClick={() => setShowStatistics(true)}
+        className="fixed right-4 z-20 h-10 w-10 rounded-full btn-gradient shadow-lg shadow-sky-900/25 flex items-center justify-center press-scale"
+        style={{ bottom: '80px' }}
+      >
+        <TrendingUp className="h-4 w-4 text-white" />
+      </button>
+
       {/* Full Transaction History */}
       <TransactionHistoryModal open={showAllTx} onClose={() => setShowAllTx(false)} />
+      
+      {/* Statistics Modal */}
+      <StatisticsModal open={showStatistics} onClose={() => setShowStatistics(false)} />
     </PageLayout>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { LayoutDashboard, Wallet, Target, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Wallet, CreditCard, Target, BarChart3, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { haptic } from '@/lib/haptics';
@@ -9,19 +9,21 @@ import { useStore } from '@/store';
 import { seedDefaultCategories, seedDemoData } from '@/db';
 import { DashboardPage } from '@/components/pages/DashboardPage';
 import { AssetsPage } from '@/components/pages/AssetsPage';
+import { DebtsPage } from '@/components/pages/DebtsPage';
 import { GoalsPage } from '@/components/pages/GoalsPage';
 import { StatisticsPage } from '@/components/pages/StatisticsPage';
 import { SettingsPage } from '@/components/pages/SettingsPage';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { SplashScreen } from '@/components/shared/SplashScreen';
 import { Onboarding } from '@/components/shared/Onboarding';
+import { BadgeCelebrationModal } from '@/components/shared/BadgeCelebrationModal';
 import type { TabId } from '@/hooks/useNavigation';
 
 const tabs = [
   { id: 'overview', label: 'Home', icon: LayoutDashboard },
   { id: 'assets', label: 'Aset', icon: Wallet },
+  { id: 'debts', label: 'Hutang', icon: CreditCard },
   { id: 'goals', label: 'Target', icon: Target },
-  { id: 'analytics', label: 'Insight', icon: BarChart3 },
   { id: 'settings', label: 'Lainnya', icon: Settings },
 ] as const;
 
@@ -147,10 +149,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
 
+    // iOS PWA: fix white-space bottom when keyboard opens/closes.
+    // When any input loses focus (keyboard dismissed), force scroll reset so
+    // the WebKit visual viewport repaints to correct height.
+    const handleFocusOut = (e: FocusEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+        // Tiny delay so the keyboard animation completes first
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+          // Force layout recalculation on WebKit
+          document.documentElement.style.setProperty('--vh-fix', `${window.innerHeight}px`);
+        }, 100);
+      }
+    };
+    document.addEventListener('focusout', handleFocusOut);
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('focusout', handleFocusOut);
       window.removeEventListener('pagehide', handleBlur);
-      window.removeEventListener('pageshow', handleFocus);
+      window.removeEventListener('pageshow', () => handleFocus());
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
     };
@@ -208,8 +227,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     switch (activeTab) {
       case 'overview': return <DashboardPage userName={userName} userAvatar={userAvatar} />;
       case 'assets': return <AssetsPage />;
+      case 'debts': return <DebtsPage />;
       case 'goals': return <GoalsPage />;
-      case 'analytics': return <StatisticsPage />;
       case 'settings': return <SettingsPage />;
     }
   };
@@ -272,6 +291,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </nav>
+
+      {/* Badge Celebration Modal — rendered globally above all tabs */}
+      <BadgeCelebrationModal />
 
       {/* Privacy blur overlay */}
       <div

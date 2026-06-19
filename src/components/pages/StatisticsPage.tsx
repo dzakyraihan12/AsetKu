@@ -156,7 +156,7 @@ export function StatisticsPage() {
                   chartPeriod === p ? 'btn-gradient text-white shadow-sm shadow-sky-900/15' : 'text-muted-foreground/40'
                 }`}
               >
-                {p === 'week' ? '1M' : p === 'month' ? '6M' : '1Y'}
+                {p === 'week' ? '1Mgg' : p === 'month' ? '6B' : '1T'}
               </button>
             ))}
           </div>

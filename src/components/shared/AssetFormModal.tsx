@@ -37,16 +37,26 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
 
   const { control, register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', categoryId: '', initialValue: 0, currency: 'IDR', notes: '' },
+    defaultValues: {
+      name: '', categoryId: '', initialValue: 0, currency: 'IDR', notes: '',
+    },
   });
 
   const selectedCategory = watch('categoryId');
 
   useEffect(() => {
     if (editing) {
-      reset({ name: editing.name, categoryId: editing.categoryId, initialValue: editing.initialValue, currency: editing.currency, notes: editing.notes });
+      reset({
+        name: editing.name,
+        categoryId: editing.categoryId,
+        initialValue: editing.initialValue,
+        currency: editing.currency,
+        notes: editing.notes,
+      });
     } else {
-      reset({ name: '', categoryId: '', initialValue: 0, currency: 'IDR', notes: '' });
+      reset({
+        name: '', categoryId: '', initialValue: 0, currency: 'IDR', notes: '',
+      });
     }
   }, [editing, open, reset]);
 
@@ -54,11 +64,18 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const payload = {
+        name: data.name,
+        categoryId: data.categoryId,
+        initialValue: data.initialValue,
+        currency: data.currency,
+        notes: data.notes,
+      };
       if (editing) {
-        await updateAsset(editing.id, data);
+        await updateAsset(editing.id, payload);
         toast('Aset berhasil diperbarui');
       } else {
-        await addAsset(data);
+        await addAsset(payload);
         toast('Aset berhasil ditambahkan');
       }
       onClose();
@@ -68,9 +85,15 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={editing ? 'Edit Aset' : 'Tambah Aset'}>
+    <Modal open={open} onClose={onClose} title={editing ? 'Edit Aset' : 'Tambah Aset Baru'}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input label="Nama Aset" placeholder="Contoh: BCA, Bitcoin, Emas" {...register('name')} error={errors.name?.message} />
+
+        <Input
+          label="Nama Aset"
+          placeholder="Contoh: BCA, Bitcoin, Emas, Properti"
+          {...register('name')}
+          error={errors.name?.message}
+        />
 
         {/* Category Chips */}
         <div className="space-y-1.5">
@@ -113,8 +136,17 @@ export function AssetFormModal({ open, onClose, editId }: Props) {
 
         <Textarea label="Catatan (opsional)" placeholder="Deskripsi singkat..." {...register('notes')} />
 
-        <Button type="submit" variant="gold" className="w-full" size="lg" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (editing ? 'Simpan' : 'Tambah Aset')}
+        <Button
+          type="submit"
+          variant="gold"
+          className="w-full"
+          size="lg"
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? <Loader2 className="h-4 w-4 animate-spin" />
+            : editing ? 'Simpan Perubahan' : 'Tambah Aset'
+          }
         </Button>
       </form>
     </Modal>
